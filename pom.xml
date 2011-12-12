@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>fr.insalyon.creatis</groupId>
+    <artifactId>vlet-agent</artifactId>
+    <packaging>pom</packaging>
+    <version>0.9.1</version>
+    <name>Vlet-Agent</name>
+    <description>Vlet Agent</description>
+    <inceptionYear>2011</inceptionYear>
+    <url>http://vip.creatis.insa-lyon.fr:9002/projects/vletagent</url>
+    <licenses>
+        <license>
+            <name>CeCILL-B, Version 1.0</name>
+            <url>http://www.cecill.info/</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <organization>
+        <name>CREATIS-LRMN</name>
+        <url>http://www.creatis.insa-lyon.fr/</url>
+    </organization>
+    <developers>
+        <developer>
+            <id>silva</id>
+            <name>Rafael SILVA</name>
+            <email>rafael.silva@creatis.insa-lyon.fr</email>
+            <url>http://www.rafaelsilva.com/</url>
+            <organization>Centre National de la Recherche Scientifique</organization>
+            <organizationUrl>http://www.cnrs.fr/</organizationUrl>
+            <timezone>1</timezone>
+        </developer>
+    </developers>
+    <modules>
+        <module>vlet-agent-common</module>
+        <module>vlet-agent-client</module>
+        <module>vlet-agent-server</module>
+    </modules>
+    <repositories>
+        <repository>
+            <id>creatis-thirdyparty</id>
+            <name>Creatis Insa Lyon repository [creatis]</name>
+            <url>http://vip.creatis.insa-lyon.fr:9007/nexus/content/repositories/thirdparty</url>
+        </repository>
+    </repositories>
+    <distributionManagement>
+        <repository>
+            <id>releases</id>
+            <url>http://vip.creatis.insa-lyon.fr:9007/nexus/content/repositories/releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>Internal Snapshots</name>
+            <url>http://vip.creatis.insa-lyon.fr:9007/nexus/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+    <scm>
+        <connection>scm:svn:https://svn.creatis.insa-lyon.fr/svn/vip/VletAgent</connection>
+        <developerConnection>scm:svn:https://svn.creatis.insa-lyon.fr/svn/vip/VletAgent</developerConnection>
+        <url>http://vip.creatis.insa-lyon.fr:9002/projects/vletagent</url>
+    </scm>
+</project>
+
