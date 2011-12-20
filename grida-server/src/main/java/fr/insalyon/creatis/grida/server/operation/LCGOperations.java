@@ -140,6 +140,9 @@ public class LCGOperations {
 
                 StringBuilder dataName = new StringBuilder();
                 for (int i = 8; i < line.length; i++) {
+                    if (line[i].equals("->")) {
+                        break;
+                    }
                     if (dataName.length() > 0) {
                         dataName.append(" ");
                     }
