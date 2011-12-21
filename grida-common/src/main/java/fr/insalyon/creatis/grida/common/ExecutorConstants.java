@@ -62,4 +62,5 @@ public class ExecutorConstants {
     public static final int POOL_REMOVE_OPERATION_BY_ID = 304;
     public static final int POOL_REMOVE_OPERATIONS_BY_USER = 305;
     public static final int POOL_ALL_OPERATIONS = 306;
+    public static final int POOL_LIMITED_OPERATIONS_BY_DATE = 307;
 }

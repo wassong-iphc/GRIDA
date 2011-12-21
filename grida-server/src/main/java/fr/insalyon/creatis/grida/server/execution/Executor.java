@@ -51,6 +51,7 @@ import fr.insalyon.creatis.grida.server.execution.command.ReplicatePreferredSEsC
 import fr.insalyon.creatis.grida.server.execution.command.UploadFileCommand;
 import fr.insalyon.creatis.grida.server.execution.pool.PoolAddOperationCommand;
 import fr.insalyon.creatis.grida.server.execution.pool.PoolAllOperationsCommand;
+import fr.insalyon.creatis.grida.server.execution.pool.PoolLimitedOperationsByDateCommand;
 import fr.insalyon.creatis.grida.server.execution.pool.PoolOperationByIdCommand;
 import fr.insalyon.creatis.grida.server.execution.pool.PoolOperationsByUserCommand;
 import fr.insalyon.creatis.grida.server.execution.pool.PoolRemoveOperationByIdCommand;
@@ -96,72 +97,75 @@ public class Executor extends Thread {
         try {
             int command = new Integer(tokens[0]);
             String proxy = tokens[1];
-            
+
             switch (command) {
-              
+
                 case ExecutorConstants.COM_GET_REMOTE_FILE:
                     return new GetRemoteFileCommand(communication, proxy, tokens[2], tokens[3]);
 
                 case ExecutorConstants.COM_GET_REMOTE_FOLDER:
                     return new GetRemoteFolderCommand(communication, proxy, tokens[2], tokens[3]);
-                    
+
                 case ExecutorConstants.COM_LIST_FILES_AND_FOLDERS:
                     return new ListFilesAndFoldersCommand(communication, proxy, tokens[2], tokens[3]);
-                    
+
                 case ExecutorConstants.COM_GET_MODIFICATION_DATE:
                     return new GetModificationDateCommand(communication, proxy, tokens[2].split(Constants.MSG_SEP_2));
-                    
+
                 case ExecutorConstants.COM_UPLOAD_FILE:
                     return new UploadFileCommand(communication, proxy, tokens[2], tokens[3]);
-                    
+
                 case ExecutorConstants.COM_UPLOAD_FILE_TO_SES:
                     return new UploadFileCommand(communication, proxy, tokens[2], tokens[3], tokens[4].split(Constants.MSG_SEP_2));
-                    
+
                 case ExecutorConstants.COM_REPLICATE_PREFERRED_SES:
                     return new ReplicatePreferredSEsCommand(communication, proxy, tokens[2]);
-                    
+
                 case ExecutorConstants.COM_DELETE:
                     return new DeleteCommand(communication, proxy, tokens[2].split(Constants.MSG_SEP_2));
-                    
+
                 case ExecutorConstants.COM_CREATE_FOLDER:
                     return new CreateFolderCommand(communication, proxy, tokens[2]);
-                    
+
                 case ExecutorConstants.COM_RENAME:
                     return new RenameCommand(communication, proxy, tokens[2], tokens[3]);
-                    
+
                 case ExecutorConstants.COM_EXIST:
                     return new ExistDataCommand(communication, proxy, tokens[2]);
-                    
+
                 // Cache Operations
                 case ExecutorConstants.CACHE_LIST_FILES:
                     return new AllCachedFilesCommand(communication, proxy);
-                    
+
                 case ExecutorConstants.CACHE_DELETE_FILE:
                     return new DeleteCachedFileCommand(communication, proxy, tokens[2]);
-                    
+
                 // Pool Operations
                 case ExecutorConstants.POOL_ADD_OPERATION:
                     return new PoolAddOperationCommand(communication, proxy, tokens[2], tokens[3], tokens[4], tokens[5]);
-                    
+
                 case ExecutorConstants.POOL_OPERATION_BY_ID:
                     return new PoolOperationByIdCommand(communication, proxy, tokens[2]);
-                    
+
                 case ExecutorConstants.POOL_OPERATIONS_BY_USER:
                     return new PoolOperationsByUserCommand(communication, proxy, tokens[2]);
-                    
+
                 case ExecutorConstants.POOL_REMOVE_OPERATION_BY_ID:
                     return new PoolRemoveOperationByIdCommand(communication, proxy, tokens[2]);
-                    
+
                 case ExecutorConstants.POOL_REMOVE_OPERATIONS_BY_USER:
                     return new PoolRemoveOperationsByUserCommand(communication, proxy, tokens[2]);
-                    
+
                 case ExecutorConstants.POOL_ALL_OPERATIONS:
                     return new PoolAllOperationsCommand(communication, proxy);
-                                        
+
+                case ExecutorConstants.POOL_LIMITED_OPERATIONS_BY_DATE:
+                    return new PoolLimitedOperationsByDateCommand(communication, proxy, tokens[2], tokens[3], tokens[4]);
+
                 default:
                     logException(new Exception("Command not recognized: " + tokens));
             }
-               
+
         } catch (NumberFormatException ex) {
             logException(new Exception("Invalid command: " + ex.getMessage()));
         } catch (ArrayIndexOutOfBoundsException ex) {
@@ -171,7 +175,7 @@ public class Executor extends Thread {
     }
 
     private void logException(Exception ex) {
-        
+
         communication.sendErrorMessage(ex.getMessage());
         communication.sendEndOfMessage();
 

@@ -43,6 +43,7 @@ import fr.insalyon.creatis.grida.server.execution.PoolDownload;
 import fr.insalyon.creatis.grida.server.execution.PoolReplicate;
 import fr.insalyon.creatis.grida.server.execution.PoolUpload;
 import java.io.File;
+import java.util.Date;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -218,6 +219,25 @@ public class PoolBusiness {
                     }
                 }
             }
+        } catch (DAOException ex) {
+            throw new BusinessException(ex);
+        }
+    }
+
+    /**
+     * 
+     * @param user
+     * @param limit
+     * @param startDate
+     * @return
+     * @throws BusinessException 
+     */
+    public List<Operation> getOperationsByLimitDateUser(String user, int limit,
+            Date startDate) throws BusinessException {
+
+        try {
+            return poolDAO.getOperationsByLimitDateUser(user, limit, startDate);
+
         } catch (DAOException ex) {
             throw new BusinessException(ex);
         }

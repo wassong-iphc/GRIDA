@@ -434,4 +434,42 @@ public class PoolData implements PoolDAO {
             throw new DAOException(ex);
         }
     }
+
+    @Override
+    public List<Operation> getOperationsByLimitDateUser(String user, int limit, Date startDate) throws DAOException {       
+        try {
+            List<Operation> operations = new ArrayList<Operation>();
+            PreparedStatement ps = connection.prepareStatement("SELECT "
+                    + "id, registration, source, dest, "
+                    + "operation, status, proxy, retrycount "
+                    + "FROM Pool "
+                    + "WHERE username = ? AND registration < ? AND operation <> ? "
+                    + "ORDER BY registration DESC "
+                    + "LIMIT 0," + limit);
+
+            ps.setString(1, user);
+            ps.setTimestamp(2, new Timestamp(startDate.getTime()));
+            ps.setString(3, Operation.Type.Replicate.name()); //TODO temporary hack for the VIP portal
+            
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                operations.add(new Operation(
+                        rs.getString("id"),
+                        new Date(rs.getTimestamp("registration").getTime()),
+                        rs.getString("source"),
+                        rs.getString("dest"),
+                        rs.getString("operation"),
+                        rs.getString("status"),
+                        user,
+                        rs.getString("proxy"),
+                        rs.getInt("retrycount")));
+            }
+            return operations;
+
+        } catch (SQLException ex) {
+            logger.error(ex);
+            throw new DAOException(ex);
+        }
+    }
 }

@@ -288,6 +288,49 @@ public class GRIDAPoolClient extends AbstractGRIDAClient {
     }
 
     /**
+     * Gets a limited list of operations by user and date.
+     * 
+     * @param user User name to be filtered
+     * @param limit Maximum size of the list
+     * @param startDate Offset date
+     * @return List of operations associated to the user
+     * @throws GRIDAClientException 
+     */
+    public List<Operation> getOperationsLimitedListByUserAndDate(String user,
+            int limit, Date startDate) throws GRIDAClientException {
+
+        try {
+            Communication communication = getCommunication();
+            communication.sendMessage(
+                    ExecutorConstants.POOL_LIMITED_OPERATIONS_BY_DATE
+                    + Constants.MSG_SEP_1 + proxyPath
+                    + Constants.MSG_SEP_1 + user
+                    + Constants.MSG_SEP_1 + limit
+                    + Constants.MSG_SEP_1 + startDate.getTime());
+            communication.sendEndOfMessage();
+
+            String operations = communication.getMessage();
+            communication.close();
+
+            List<Operation> operationsList = new ArrayList<Operation>();
+
+            if (!operations.isEmpty()) {
+                for (String data : operations.split(Constants.MSG_SEP_1)) {
+                    String[] operation = data.split(Constants.MSG_SEP_2);
+                    operationsList.add(new Operation(
+                            operation[0], new Date(new Long(operation[1])), operation[2],
+                            operation[3], operation[4], operation[5], operation[6]));
+                }
+            }
+
+            return operationsList;
+
+        } catch (IOException ex) {
+            throw new GRIDAClientException(ex);
+        }
+    }
+
+    /**
      * Gets an operation according to ID.
      *
      * @param id Operation identification

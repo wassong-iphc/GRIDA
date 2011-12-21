@@ -35,6 +35,7 @@
 package fr.insalyon.creatis.grida.server.dao;
 
 import fr.insalyon.creatis.grida.common.bean.Operation;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -70,4 +71,6 @@ public interface PoolDAO {
     public void removeOperationByDestAndType(String dest, Operation.Type type) throws DAOException;
 
     public void removeOperationsByUser(String user) throws DAOException;
+    
+    public List<Operation> getOperationsByLimitDateUser(String user, int limit, Date startDate) throws DAOException;
 }
