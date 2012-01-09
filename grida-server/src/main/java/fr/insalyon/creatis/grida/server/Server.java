@@ -35,6 +35,8 @@
 package fr.insalyon.creatis.grida.server;
 
 import fr.insalyon.creatis.grida.common.Communication;
+import fr.insalyon.creatis.grida.server.dao.DAOException;
+import fr.insalyon.creatis.grida.server.dao.DAOFactory;
 import fr.insalyon.creatis.grida.server.execution.Executor;
 import fr.insalyon.creatis.grida.server.execution.PoolDelete;
 import fr.insalyon.creatis.grida.server.execution.PoolDownload;
@@ -64,6 +66,7 @@ public class Server {
             logger.info("\nStarting GRIDA Server on port " + Configuration.getInstance().getPort());
             
             // Pools
+            DAOFactory.getDAOFactory().getPoolDAO().resetOperations();
             PoolDownload.getInstance();
             PoolUpload.getInstance();
             PoolDelete.getInstance();
@@ -79,8 +82,10 @@ public class Server {
                 new Executor(communication).start();
             }
 
+        } catch (DAOException ex) {
+            logger.error(ex);
         } catch (IOException ex) {
-            logger.error(ex.getMessage());
+            logger.error(ex);
         }
     }
 }

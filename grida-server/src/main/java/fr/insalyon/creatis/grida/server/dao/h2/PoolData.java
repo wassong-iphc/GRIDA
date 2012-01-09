@@ -472,4 +472,19 @@ public class PoolData implements PoolDAO {
             throw new DAOException(ex);
         }
     }
+
+    @Override
+    public void resetOperations() throws DAOException {
+        try {
+            PreparedStatement ps = connection.prepareStatement("UPDATE Pool "
+                    + "SET status = ? WHERE status = ?");
+            ps.setString(1, Operation.Status.Queued.name());
+            ps.setString(2, Operation.Status.Running.name());
+            ps.executeUpdate();
+            
+        } catch (SQLException ex) {
+            logger.error(ex);
+            throw new DAOException(ex);
+        }
+    }
 }

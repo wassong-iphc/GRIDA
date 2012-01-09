@@ -73,4 +73,6 @@ public interface PoolDAO {
     public void removeOperationsByUser(String user) throws DAOException;
     
     public List<Operation> getOperationsByLimitDateUser(String user, int limit, Date startDate) throws DAOException;
+    
+    public void resetOperations() throws DAOException;
 }
