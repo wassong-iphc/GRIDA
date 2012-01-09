@@ -60,7 +60,7 @@ public class Configuration {
     private String vo = "biomed";
     private String bdiiHost = "cclcgtopbdii02.in2p3.fr";
     private String bdiiPort = "2170";
-    private String preferredSEsList = "ccsrm02.in2p3.fr";
+    private List<String> preferredSEsList;
     private int maxRetryCount = 5;
     private List<String> failoverServers;
     private boolean isLcgCommandsAvailable = false;
@@ -108,7 +108,7 @@ public class Configuration {
             vo = config.getString("vo", vo);
             bdiiHost = config.getString("bdii.host", bdiiHost);
             bdiiPort = config.getString("bdii.port", bdiiPort);
-            preferredSEsList = config.getString("lfc.preferredSEsList", preferredSEsList);
+            preferredSEsList = config.getList("lfc.preferredSEsList", new ArrayList<String>());
             cacheListMaxEntries = config.getInt("cache.list.max.entries", cacheListMaxEntries);
             cacheListMaxHours = config.getInt("cache.list.max.hours", cacheListMaxHours);
             cacheFilesMaxSize = config.getDouble("cache.files.max.size", cacheFilesMaxSize / (1024 * 1024)) * 1024 * 1024;
@@ -238,12 +238,20 @@ public class Configuration {
         return vrsContext;
     }
 
-    public String[] getPreferredSEs() {
-        return preferredSEsList.split(",");
+    public List<String> getPreferredSEs() {
+        return preferredSEsList;
     }
 
     public void setPreferredSEs() {
-        GlobalConfig.setSystemProperty("lfc.listPreferredSEs", preferredSEsList);
+        
+        StringBuilder sb = new StringBuilder();
+        for (String se : preferredSEsList) {
+            if (sb.length() > 0) {
+                sb.append(",");
+            }
+            sb.append(se);
+        }
+        GlobalConfig.setSystemProperty("lfc.listPreferredSEs", sb.toString());
     }
 
     public void setPreferredSEs(String list) {
