@@ -63,7 +63,7 @@ public class Server {
             PropertyConfigurator.configure(Server.class.getClassLoader().getResource("gridaLog4j.properties"));
 
             Configuration.getInstance();
-            logger.info("\nStarting GRIDA Server on port " + Configuration.getInstance().getPort());
+            logger.info("Starting GRIDA Server on port " + Configuration.getInstance().getPort());
             
             // Pools
             DAOFactory.getDAOFactory().getPoolDAO().resetOperations();
