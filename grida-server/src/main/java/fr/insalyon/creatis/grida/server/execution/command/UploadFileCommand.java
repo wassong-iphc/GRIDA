@@ -41,6 +41,7 @@ import fr.insalyon.creatis.grida.common.bean.Operation;
 import fr.insalyon.creatis.grida.server.business.BusinessException;
 import fr.insalyon.creatis.grida.server.business.OperationBusiness;
 import fr.insalyon.creatis.grida.server.business.PoolBusiness;
+import java.io.File;
 
 /**
  *

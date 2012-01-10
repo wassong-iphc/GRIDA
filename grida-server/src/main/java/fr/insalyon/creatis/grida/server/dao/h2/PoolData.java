@@ -73,8 +73,8 @@ public class PoolData implements PoolDAO {
         try {
             PreparedStatement ps = connection.prepareStatement(
                     "INSERT INTO Pool(id, registration, source, dest, "
-                    + "operation, status, username, proxy, retrycount) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    + "operation, status, username, proxy, retrycount, size) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
             ps.setString(1, operation.getId());
             ps.setTimestamp(2, new Timestamp(operation.getRegistration().getTime()));
@@ -85,6 +85,7 @@ public class PoolData implements PoolDAO {
             ps.setString(7, operation.getUser());
             ps.setString(8, operation.getProxy());
             ps.setInt(9, operation.getRetrycount());
+            ps.setDouble(10, operation.getSize());
             ps.execute();
 
         } catch (SQLException ex) {
@@ -133,7 +134,7 @@ public class PoolData implements PoolDAO {
             List<Operation> operations = new ArrayList<Operation>();
             PreparedStatement ps = connection.prepareStatement("SELECT "
                     + "id, registration, source, dest, "
-                    + "operation, status, proxy, retrycount "
+                    + "operation, status, proxy, retrycount, size, size "
                     + "FROM Pool "
                     + "WHERE username=? AND operation <> ? ORDER BY registration DESC");
 
@@ -151,7 +152,8 @@ public class PoolData implements PoolDAO {
                         rs.getString("status"),
                         user,
                         rs.getString("proxy"),
-                        rs.getInt("retrycount")));
+                        rs.getInt("retrycount"),
+                        rs.getDouble("size")));
             }
             return operations;
 
@@ -167,7 +169,7 @@ public class PoolData implements PoolDAO {
             List<Operation> operations = new ArrayList<Operation>();
             PreparedStatement ps = connection.prepareStatement("SELECT "
                     + "id, registration, source, dest, "
-                    + "operation, status, username, proxy, retrycount "
+                    + "operation, status, username, proxy, retrycount, size "
                     + "FROM Pool "
                     + "WHERE (status=? OR status=?) AND "
                     + "(operation=? OR operation=?) "
@@ -189,7 +191,8 @@ public class PoolData implements PoolDAO {
                         rs.getString("status"),
                         rs.getString("username"),
                         rs.getString("proxy"),
-                        rs.getInt("retrycount")));
+                        rs.getInt("retrycount"),
+                        rs.getDouble("size")));
             }
             return operations;
 
@@ -205,7 +208,7 @@ public class PoolData implements PoolDAO {
             List<Operation> operations = new ArrayList<Operation>();
             PreparedStatement ps = connection.prepareStatement("SELECT "
                     + "id, registration, source, dest, "
-                    + "operation, status, username, proxy, retrycount "
+                    + "operation, status, username, proxy, retrycount, size "
                     + "FROM Pool "
                     + "WHERE (status = ? OR status = ?) AND "
                     + "operation = ? "
@@ -226,7 +229,8 @@ public class PoolData implements PoolDAO {
                         rs.getString("status"),
                         rs.getString("username"),
                         rs.getString("proxy"),
-                        rs.getInt("retrycount")));
+                        rs.getInt("retrycount"),
+                        rs.getDouble("size")));
             }
             return operations;
 
@@ -242,7 +246,7 @@ public class PoolData implements PoolDAO {
             List<Operation> operations = new ArrayList<Operation>();
             PreparedStatement ps = connection.prepareStatement("SELECT "
                     + "id, registration, source, dest, "
-                    + "operation, status, username, proxy, retrycount "
+                    + "operation, status, username, proxy, retrycount, size "
                     + "FROM Pool "
                     + "WHERE (status = ? OR status = ?) AND "
                     + "operation = ? "
@@ -263,7 +267,8 @@ public class PoolData implements PoolDAO {
                         rs.getString("status"),
                         rs.getString("username"),
                         rs.getString("proxy"),
-                        rs.getInt("retrycount")));
+                        rs.getInt("retrycount"),
+                        rs.getDouble("size")));
             }
             return operations;
 
@@ -279,7 +284,7 @@ public class PoolData implements PoolDAO {
             List<Operation> operations = new ArrayList<Operation>();
             PreparedStatement ps = connection.prepareStatement("SELECT "
                     + "id, registration, source, dest, "
-                    + "operation, status, username, proxy, retrycount "
+                    + "operation, status, username, proxy, retrycount, size "
                     + "FROM Pool "
                     + "WHERE (status = ? OR status = ?) AND "
                     + "operation = ? "
@@ -300,7 +305,8 @@ public class PoolData implements PoolDAO {
                         rs.getString("status"),
                         rs.getString("username"),
                         rs.getString("proxy"),
-                        rs.getInt("retrycount")));
+                        rs.getInt("retrycount"),
+                        rs.getDouble("size")));
             }
             return operations;
 
@@ -316,7 +322,7 @@ public class PoolData implements PoolDAO {
 
             PreparedStatement ps = connection.prepareStatement("SELECT "
                     + "id, registration, source, dest, "
-                    + "operation, status, username, proxy, retrycount "
+                    + "operation, status, username, proxy, retrycount, size "
                     + "FROM Pool WHERE id=?");
 
             ps.setString(1, id);
@@ -332,7 +338,8 @@ public class PoolData implements PoolDAO {
                     rs.getString("status"),
                     rs.getString("username"),
                     rs.getString("proxy"),
-                    rs.getInt("retrycount"));
+                    rs.getInt("retrycount"),
+                    rs.getDouble("size"));
 
         } catch (SQLException ex) {
             logger.error(ex);
@@ -346,7 +353,7 @@ public class PoolData implements PoolDAO {
             List<Operation> operations = new ArrayList<Operation>();
             PreparedStatement ps = connection.prepareStatement("SELECT "
                     + "id, registration, source, dest, username, "
-                    + "operation, status, proxy, retrycount "
+                    + "operation, status, proxy, retrycount, size "
                     + "FROM Pool ORDER BY registration DESC");
 
             ResultSet rs = ps.executeQuery();
@@ -360,7 +367,8 @@ public class PoolData implements PoolDAO {
                         rs.getString("status"),
                         rs.getString("username"),
                         rs.getString("proxy"),
-                        rs.getInt("retrycount")));
+                        rs.getInt("retrycount"),
+                        rs.getDouble("size")));
             }
             return operations;
 
@@ -441,7 +449,7 @@ public class PoolData implements PoolDAO {
             List<Operation> operations = new ArrayList<Operation>();
             PreparedStatement ps = connection.prepareStatement("SELECT "
                     + "id, registration, source, dest, "
-                    + "operation, status, proxy, retrycount "
+                    + "operation, status, proxy, retrycount, size "
                     + "FROM Pool "
                     + "WHERE username = ? AND registration < ? AND operation <> ? "
                     + "ORDER BY registration DESC "
@@ -463,7 +471,8 @@ public class PoolData implements PoolDAO {
                         rs.getString("status"),
                         user,
                         rs.getString("proxy"),
-                        rs.getInt("retrycount")));
+                        rs.getInt("retrycount"),
+                        rs.getDouble("size")));
             }
             return operations;
 

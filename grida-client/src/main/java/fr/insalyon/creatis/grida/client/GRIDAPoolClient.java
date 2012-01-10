@@ -273,10 +273,7 @@ public class GRIDAPoolClient extends AbstractGRIDAClient {
 
             if (!operations.isEmpty()) {
                 for (String data : operations.split(Constants.MSG_SEP_1)) {
-                    String[] operation = data.split(Constants.MSG_SEP_2);
-                    operationsList.add(new Operation(
-                            operation[0], new Date(new Long(operation[1])), operation[2],
-                            operation[3], operation[4], operation[5], operation[6]));
+                    operationsList.add(parseOperation(data));
                 }
             }
 
@@ -316,10 +313,7 @@ public class GRIDAPoolClient extends AbstractGRIDAClient {
 
             if (!operations.isEmpty()) {
                 for (String data : operations.split(Constants.MSG_SEP_1)) {
-                    String[] operation = data.split(Constants.MSG_SEP_2);
-                    operationsList.add(new Operation(
-                            operation[0], new Date(new Long(operation[1])), operation[2],
-                            operation[3], operation[4], operation[5], operation[6]));
+                    operationsList.add(parseOperation(data));
                 }
             }
 
@@ -349,11 +343,7 @@ public class GRIDAPoolClient extends AbstractGRIDAClient {
             String data = communication.getMessage();
             communication.close();
 
-            String[] operation = data.split(Constants.MSG_SEP_2);
-
-            return new Operation(
-                    operation[0], new Date(new Long(operation[1])), operation[2],
-                    operation[3], operation[4], operation[5], operation[6]);
+            return parseOperation(data);
 
         } catch (IOException ex) {
             throw new GRIDAClientException(ex);
@@ -428,10 +418,7 @@ public class GRIDAPoolClient extends AbstractGRIDAClient {
 
             if (!operations.isEmpty()) {
                 for (String data : operations.split(Constants.MSG_SEP_1)) {
-                    String[] operation = data.split(Constants.MSG_SEP_2);
-                    operationsList.add(new Operation(
-                            operation[0], new Date(new Long(operation[1])), operation[2],
-                            operation[3], operation[4], operation[5], operation[6]));
+                    operationsList.add(parseOperation(data));
                 }
             }
 
@@ -440,5 +427,14 @@ public class GRIDAPoolClient extends AbstractGRIDAClient {
         } catch (IOException ex) {
             throw new GRIDAClientException(ex);
         }
+    }
+
+    private Operation parseOperation(String data) {
+        
+        String[] operation = data.split(Constants.MSG_SEP_2);
+        return new Operation(
+                operation[0], new Date(new Long(operation[1])), operation[2],
+                operation[3], operation[4], operation[5], operation[6], 
+                new Double(operation[7]), new Integer(operation[8]));
     }
 }

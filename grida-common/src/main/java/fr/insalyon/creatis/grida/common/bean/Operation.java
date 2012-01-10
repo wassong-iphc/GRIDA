@@ -34,6 +34,8 @@
  */
 package fr.insalyon.creatis.grida.common.bean;
 
+import fr.insalyon.creatis.grida.common.Constants;
+import java.io.File;
 import java.util.Date;
 
 /**
@@ -60,6 +62,8 @@ public class Operation {
     private String user;
     private String proxy;
     private int retrycount;
+    private double size;
+    private int progress;
 
     /**
      * 
@@ -71,8 +75,9 @@ public class Operation {
      * @param status
      * @param user
      */
-    public Operation(String id, Date registration, String source, String dest, String type, String status, String user) {
-        this(id, registration, source, dest, type, status, user, "", 0);
+    public Operation(String id, Date registration, String source, String dest,
+            String type, String status, String user, double size, int progress) {
+        this(id, registration, source, dest, type, status, user, "", 0, size, progress);
     }
 
     /**
@@ -84,8 +89,9 @@ public class Operation {
      * @param user
      * @param proxy
      */
-    public Operation(String id, String source, String dest, String type, String user, String proxy) {
-        this(id, new Date(), source, dest, type, Status.Queued.toString(), user, proxy, 0);
+    public Operation(String id, String source, String dest, String type,
+            String user, String proxy, double size) {
+        this(id, new Date(), source, dest, type, Status.Queued.toString(), user, proxy, 0, size);
     }
 
     /**
@@ -99,8 +105,32 @@ public class Operation {
      * @param user
      * @param proxy
      * @param retrycount
+     * @param size 
      */
-    public Operation(String id, Date registration, String source, String dest, String type, String status, String user, String proxy, int retrycount) {
+    public Operation(String id, Date registration, String source, String dest,
+            String type, String status, String user, String proxy,
+            int retrycount, double size) {
+        this(id, registration, source, dest, type, status, user, proxy, retrycount, size, 0);
+    }
+    
+    /**
+     * 
+     * @param id
+     * @param registration
+     * @param source
+     * @param dest
+     * @param type
+     * @param status
+     * @param user
+     * @param proxy
+     * @param retrycount
+     * @param size
+     * @param progress 
+     */
+    public Operation(String id, Date registration, String source, String dest,
+            String type, String status, String user, String proxy,
+            int retrycount, double size, int progress) {
+        
         this.id = id;
         this.registration = registration;
         this.source = source;
@@ -110,6 +140,8 @@ public class Operation {
         this.user = user;
         this.proxy = proxy;
         this.retrycount = retrycount;
+        this.size = size;
+        this.progress = progress;
     }
 
     public String getId() {
@@ -155,8 +187,37 @@ public class Operation {
     public void setStatus(Status status) {
         this.status = status;
     }
-    
+
     public void setDest(String dest) {
         this.dest = dest;
+    }
+
+    public double getSize() {
+        return size;
+    }
+
+    public int getProgress() {
+        return progress;
+    }
+
+    @Override
+    public String toString() {
+
+        if (type == Type.Download) {
+            File destFile = new File(dest + "/" + new File(source).getName());
+            if (destFile.exists()) {
+                progress = (int) (destFile.length() * 100 / size);
+            }
+        }
+        
+        return id
+                + Constants.MSG_SEP_2 + registration.getTime()
+                + Constants.MSG_SEP_2 + source
+                + Constants.MSG_SEP_2 + dest
+                + Constants.MSG_SEP_2 + type.name()
+                + Constants.MSG_SEP_2 + status.name()
+                + Constants.MSG_SEP_2 + user
+                + Constants.MSG_SEP_2 + size
+                + Constants.MSG_SEP_2 + progress;
     }
 }

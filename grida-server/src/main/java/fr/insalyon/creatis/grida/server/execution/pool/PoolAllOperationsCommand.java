@@ -35,7 +35,6 @@
 package fr.insalyon.creatis.grida.server.execution.pool;
 
 import fr.insalyon.creatis.grida.common.Communication;
-import fr.insalyon.creatis.grida.common.Constants;
 import fr.insalyon.creatis.grida.common.bean.Operation;
 import fr.insalyon.creatis.grida.server.business.BusinessException;
 import fr.insalyon.creatis.grida.server.business.PoolBusiness;
@@ -56,14 +55,7 @@ public class PoolAllOperationsCommand extends Command {
         try {
             PoolBusiness poolBusiness = new PoolBusiness();
             for (Operation operation : poolBusiness.getOperations()) {
-                communication.sendMessage(
-                        operation.getId()
-                        + Constants.MSG_SEP_2 + operation.getRegistration().getTime()
-                        + Constants.MSG_SEP_2 + operation.getSource()
-                        + Constants.MSG_SEP_2 + operation.getDest()
-                        + Constants.MSG_SEP_2 + operation.getType().name()
-                        + Constants.MSG_SEP_2 + operation.getStatus().name()
-                        + Constants.MSG_SEP_2 + operation.getUser());
+                communication.sendMessage(operation.toString());
             }
         } catch (BusinessException ex) {
             communication.sendErrorMessage(ex.getMessage());

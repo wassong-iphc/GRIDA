@@ -328,7 +328,7 @@ public class VletOperations {
             setProxy(proxy);
             logger.info("[VLET] Renaming '" + oldPath + "' to '" + newPath + "'");
             VRL vrl = new VRL("lfn://" + Configuration.getInstance().getLfcHost() + "/" + oldPath);
-            
+
             if (exist(proxy, newPath)) {
                 logger.warn("[VLET] File " + newPath + " already exists. Trying with new name.");
                 newPath += new SimpleDateFormat("-HH-mm-ss-dd-MM-yyyy").format(new Date());
@@ -374,7 +374,7 @@ public class VletOperations {
             setProxy(proxy);
             VRL vrl = new VRL("lfn://" + Configuration.getInstance().getLfcHost() + "/" + path);
             vfsClient.getVFSNode(vrl);
-            
+
         } catch (VlException ex) {
             if (ex.getMessage().equals("Error while performing:LINKSTAT")) {
                 return false;
@@ -382,5 +382,25 @@ public class VletOperations {
             throw new OperationException(ex);
         }
         return true;
+    }
+
+    /**
+     * 
+     * @param proxy
+     * @param path
+     * @return
+     * @throws OperationException 
+     */
+    public static long getFileSize(String proxy, String path) throws OperationException {
+
+        try {
+            setProxy(proxy);
+            VRL vrl = new VRL("lfn://" + Configuration.getInstance().getLfcHost() + "/" + path);
+            return vfsClient.getFile(vrl).getLength();
+
+        } catch (VlException ex) {
+            logger.error(ex);
+            throw new OperationException(ex);
+        }
     }
 }

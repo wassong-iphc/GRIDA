@@ -68,17 +68,23 @@ public class PoolBusiness {
      * @param proxyFileName
      * @param source
      * @param dest
-     * @param operation
+     * @param type
      * @param user
      * @return
      * @throws BusinessException 
      */
     public String addOperation(String proxyFileName, String source, String dest,
-            String operation, String user) throws BusinessException {
+            String type, String user) throws BusinessException {
 
         try {
-            String id = operation + "-" + System.nanoTime();
-            Operation op = new Operation(id, source, dest, operation, user, proxyFileName);
+            String id = type + "-" + System.nanoTime();
+            OperationBusiness operationBusiness = new OperationBusiness(proxyFileName);
+            double size = 0;
+            if (type.equals(Operation.Type.Download.name())) {
+                size = operationBusiness.getFileSize(source);
+            }
+            Operation op = new Operation(id, source, dest, type, user,
+                    proxyFileName, size);
             poolDAO.addOperation(op);
 
             switch (op.getType()) {

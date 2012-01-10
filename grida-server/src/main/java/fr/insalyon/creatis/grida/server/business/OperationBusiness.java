@@ -377,6 +377,20 @@ public class OperationBusiness {
             throw new BusinessException(ex);
         }
     }
+    
+    public long getFileSize(String path) throws BusinessException {
+        
+        try {
+            if (configuration.isLcgCommandsAvailable()) {
+                return LCGOperations.getFileSize(proxy, path);
+            } else {
+                return VletOperations.getFileSize(proxy, path);
+            }
+            
+        } catch (OperationException ex) {
+            throw new BusinessException(ex);
+        }
+    }
 
     /**
      * 

@@ -100,6 +100,7 @@ public class H2DAOFactory extends DAOFactory {
                     + "username VARCHAR(255), "
                     + "proxy VARCHAR(100), "
                     + "retrycount INT, "
+                    + "size DOUBLE, "
                     + "PRIMARY KEY (id)"
                     + ")");
             stat.executeUpdate("CREATE INDEX user_idx ON Pool(username)");

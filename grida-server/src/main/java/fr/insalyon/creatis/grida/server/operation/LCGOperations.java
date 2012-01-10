@@ -601,4 +601,48 @@ public class LCGOperations {
             throw new OperationException(ex);
         }
     }
+    
+    /**
+     * 
+     * @param proxy
+     * @param path
+     * @return
+     * @throws OperationException 
+     */
+    public static long getFileSize(String proxy, String path) throws OperationException {
+        
+        try {
+            logger.info("[LCG] getting size of: " + path);
+            Process process = OperationsUtil.getProcess(proxy, "lfc-ls", "-l", path);
+
+            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String s = null;
+            String cout = "";
+
+            long size = 0;
+            while ((s = r.readLine()) != null) {
+                cout += s + "\n";
+                String[] line = s.split("\\s+");
+                size = new Long(line[4]);                
+            }
+            process.waitFor();
+            OperationsUtil.close(process);
+            r.close();
+
+            if (process.exitValue() != 0) {
+                logger.error("[LCG] Unable to get size of '" + path + "': " + cout);
+                throw new OperationException(cout);
+            }
+            process = null;
+
+            return size;
+            
+        } catch (InterruptedException ex) {
+            logger.error(ex);
+            throw new OperationException(ex);
+        } catch (IOException ex) {
+            logger.error(ex);
+            throw new OperationException(ex);
+        }
+    }
 }
