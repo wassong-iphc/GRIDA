@@ -400,7 +400,10 @@ public class LCGOperations {
                 if (data.getType() == GridData.Type.Folder) {
                     deleteFolder(proxy, path + "/" + data.getName());
                 } else {
-                    deleteFile(proxy, path + "/" + data.getName());
+                    try {
+                        deleteFile(proxy, path + "/" + data.getName());
+                    } catch (OperationException ex) {
+                    }
                 }
             }
 
@@ -601,7 +604,7 @@ public class LCGOperations {
             throw new OperationException(ex);
         }
     }
-    
+
     /**
      * 
      * @param proxy
@@ -610,7 +613,7 @@ public class LCGOperations {
      * @throws OperationException 
      */
     public static long getFileSize(String proxy, String path) throws OperationException {
-        
+
         try {
             logger.info("[LCG] getting size of: " + path);
             Process process = OperationsUtil.getProcess(proxy, "lfc-ls", "-l", path);
@@ -623,7 +626,7 @@ public class LCGOperations {
             while ((s = r.readLine()) != null) {
                 cout += s + "\n";
                 String[] line = s.split("\\s+");
-                size = new Long(line[4]);                
+                size = new Long(line[4]);
             }
             process.waitFor();
             OperationsUtil.close(process);
@@ -636,7 +639,7 @@ public class LCGOperations {
             process = null;
 
             return size;
-            
+
         } catch (InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);
