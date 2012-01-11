@@ -135,7 +135,7 @@ public class PoolDelete extends Thread {
 
             try {
                 if (operation.getRetrycount() == Configuration.getInstance().getMaxRetryCount()) {
-                    updateStatus(operation, Status.Failed);
+                    poolDAO.removeOperationById(operation.getId());
                 } else {
                     operation.incrementRetryCount();
                     updateStatus(operation, Status.Rescheduled);
