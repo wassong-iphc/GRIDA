@@ -34,6 +34,8 @@
  */
 package fr.insalyon.creatis.grida.server.dao.h2;
 
+import condor.classad.Constant;
+import fr.insalyon.creatis.grida.common.Constants;
 import fr.insalyon.creatis.grida.common.bean.Operation;
 import fr.insalyon.creatis.grida.server.dao.DAOException;
 import fr.insalyon.creatis.grida.server.dao.PoolDAO;
@@ -146,7 +148,7 @@ public class PoolData implements PoolDAO {
                 operations.add(new Operation(
                         rs.getString("id"),
                         new Date(rs.getTimestamp("registration").getTime()),
-                        rs.getString("source"),
+                        rs.getString("source").replaceAll(Constants.MSG_SEP_2, Constants.MSG_SEP_3),
                         rs.getString("dest"),
                         rs.getString("operation"),
                         rs.getString("status"),
@@ -332,7 +334,7 @@ public class PoolData implements PoolDAO {
             return new Operation(
                     rs.getString("id"),
                     new Date(rs.getTimestamp("registration").getTime()),
-                    rs.getString("source"),
+                    rs.getString("source").replaceAll(Constants.MSG_SEP_2, Constants.MSG_SEP_3),
                     rs.getString("dest"),
                     rs.getString("operation"),
                     rs.getString("status"),
@@ -361,7 +363,7 @@ public class PoolData implements PoolDAO {
                 operations.add(new Operation(
                         rs.getString("id"),
                         new Date(rs.getTimestamp("registration").getTime()),
-                        rs.getString("source"),
+                        rs.getString("source").replaceAll(Constants.MSG_SEP_2, Constants.MSG_SEP_3),
                         rs.getString("dest"),
                         rs.getString("operation"),
                         rs.getString("status"),
@@ -465,7 +467,7 @@ public class PoolData implements PoolDAO {
                 operations.add(new Operation(
                         rs.getString("id"),
                         new Date(rs.getTimestamp("registration").getTime()),
-                        rs.getString("source"),
+                        rs.getString("source").replaceAll(Constants.MSG_SEP_2, Constants.MSG_SEP_3),
                         rs.getString("dest"),
                         rs.getString("operation"),
                         rs.getString("status"),
