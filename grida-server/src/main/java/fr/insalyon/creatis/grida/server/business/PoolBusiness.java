@@ -34,6 +34,8 @@
  */
 package fr.insalyon.creatis.grida.server.business;
 
+import condor.classad.Constant;
+import fr.insalyon.creatis.grida.common.Constants;
 import fr.insalyon.creatis.grida.common.bean.Operation;
 import fr.insalyon.creatis.grida.server.dao.DAOException;
 import fr.insalyon.creatis.grida.server.dao.DAOFactory;
@@ -79,10 +81,17 @@ public class PoolBusiness {
         try {
             String id = type + "-" + System.nanoTime();
             OperationBusiness operationBusiness = new OperationBusiness(proxyFileName);
+            
             double size = 0;
             if (type.equals(Operation.Type.Download.name())) {
                 size = operationBusiness.getFileSize(source);
+            
+            } else if (type.equals(Operation.Type.Download_Files.name())) {
+                for (String src : source.split(Constants.MSG_SEP_2)) {
+                    size += operationBusiness.getFileSize(src);
+                }
             }
+            
             Operation op = new Operation(id, source, dest, type, user,
                     proxyFileName, size);
             poolDAO.addOperation(op);

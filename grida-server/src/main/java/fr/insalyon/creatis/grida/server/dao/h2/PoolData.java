@@ -148,7 +148,7 @@ public class PoolData implements PoolDAO {
                 operations.add(new Operation(
                         rs.getString("id"),
                         new Date(rs.getTimestamp("registration").getTime()),
-                        rs.getString("source").replaceAll(Constants.MSG_SEP_2, Constants.MSG_SEP_3),
+                        rs.getString("source"),
                         rs.getString("dest"),
                         rs.getString("operation"),
                         rs.getString("status"),
@@ -334,7 +334,7 @@ public class PoolData implements PoolDAO {
             return new Operation(
                     rs.getString("id"),
                     new Date(rs.getTimestamp("registration").getTime()),
-                    rs.getString("source").replaceAll(Constants.MSG_SEP_2, Constants.MSG_SEP_3),
+                    rs.getString("source"),
                     rs.getString("dest"),
                     rs.getString("operation"),
                     rs.getString("status"),
@@ -363,7 +363,7 @@ public class PoolData implements PoolDAO {
                 operations.add(new Operation(
                         rs.getString("id"),
                         new Date(rs.getTimestamp("registration").getTime()),
-                        rs.getString("source").replaceAll(Constants.MSG_SEP_2, Constants.MSG_SEP_3),
+                        rs.getString("source"),
                         rs.getString("dest"),
                         rs.getString("operation"),
                         rs.getString("status"),
@@ -467,7 +467,7 @@ public class PoolData implements PoolDAO {
                 operations.add(new Operation(
                         rs.getString("id"),
                         new Date(rs.getTimestamp("registration").getTime()),
-                        rs.getString("source").replaceAll(Constants.MSG_SEP_2, Constants.MSG_SEP_3),
+                        rs.getString("source"),
                         rs.getString("dest"),
                         rs.getString("operation"),
                         rs.getString("status"),

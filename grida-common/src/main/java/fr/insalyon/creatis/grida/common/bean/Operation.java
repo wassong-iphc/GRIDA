@@ -66,7 +66,7 @@ public class Operation {
     private int progress;
 
     /**
-     * 
+     *
      * @param id
      * @param registration
      * @param source
@@ -81,7 +81,7 @@ public class Operation {
     }
 
     /**
-     * 
+     *
      * @param id
      * @param source
      * @param dest
@@ -95,26 +95,7 @@ public class Operation {
     }
 
     /**
-     * 
-     * @param id
-     * @param registration
-     * @param source
-     * @param dest
-     * @param type
-     * @param status
-     * @param user
-     * @param proxy
-     * @param retrycount
-     * @param size 
-     */
-    public Operation(String id, Date registration, String source, String dest,
-            String type, String status, String user, String proxy,
-            int retrycount, double size) {
-        this(id, registration, source, dest, type, status, user, proxy, retrycount, size, 0);
-    }
-    
-    /**
-     * 
+     *
      * @param id
      * @param registration
      * @param source
@@ -125,12 +106,31 @@ public class Operation {
      * @param proxy
      * @param retrycount
      * @param size
-     * @param progress 
+     */
+    public Operation(String id, Date registration, String source, String dest,
+            String type, String status, String user, String proxy,
+            int retrycount, double size) {
+        this(id, registration, source, dest, type, status, user, proxy, retrycount, size, 0);
+    }
+
+    /**
+     *
+     * @param id
+     * @param registration
+     * @param source
+     * @param dest
+     * @param type
+     * @param status
+     * @param user
+     * @param proxy
+     * @param retrycount
+     * @param size
+     * @param progress
      */
     public Operation(String id, Date registration, String source, String dest,
             String type, String status, String user, String proxy,
             int retrycount, double size, int progress) {
-        
+
         this.id = id;
         this.registration = registration;
         this.source = source;
@@ -208,11 +208,22 @@ public class Operation {
             if (destFile.exists()) {
                 progress = (int) (destFile.length() * 100 / size);
             }
+
+        } else if (type == Type.Download_Files) {
+
+            long downloaded = 0;
+            for (String src : source.split(Constants.MSG_SEP_2)) {
+                File destFile = new File(dest + "/" + new File(src).getName());
+                if (destFile.exists()) {
+                    downloaded += destFile.length();
+                }
+            }
+            progress = (int) (downloaded * 100 / size);
         }
-        
+
         return id
                 + Constants.MSG_SEP_2 + registration.getTime()
-                + Constants.MSG_SEP_2 + source
+                + Constants.MSG_SEP_2 + source.replaceAll(Constants.MSG_SEP_2, Constants.MSG_SEP_3)
                 + Constants.MSG_SEP_2 + dest
                 + Constants.MSG_SEP_2 + type.name()
                 + Constants.MSG_SEP_2 + status.name()
