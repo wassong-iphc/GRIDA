@@ -152,9 +152,26 @@ public class LCGOperations {
                 if (type == GridData.Type.Folder) {
                     data.add(new GridData(dataName.toString(), type, line[0]));
                 } else {
-                    String modifTime = line[5] + " " + line[6] + " " + line[7];
+                    String modifTime = "unknown";
+                    if(line.length < 6)
+                          logger.warn("Cannot get modification time; setting it to \"unknown\".");
+                        else
+                          modifTime = line[5] + " " + line[6] + " " + line[7];
+                    Long l = null;
+                    try{
+                        l = new Long(line[4]);
+                    }
+                    catch(java.lang.NumberFormatException e){
+                        logger.warn("Cannot parse long: \""+line[4]+"\". Setting file length to 0");
+                        l = new Long(0);
+                    }
+                    catch(java.lang.ArrayIndexOutOfBoundsException e){
+                        logger.warn("Cannot get long. Setting file length to 0");
+                        l = new Long(0);
+                    }
+                    
                     data.add(new GridData(dataName.toString(), type,
-                            new Long(line[4]), modifTime, "-", line[0]));
+                            l, modifTime, "-", line[0]));
                 }
             }
             process.waitFor();
