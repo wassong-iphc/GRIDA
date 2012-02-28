@@ -34,14 +34,13 @@
  */
 package fr.insalyon.creatis.grida.server.execution.command;
 
-import fr.insalyon.creatis.grida.server.execution.Command;
-import fr.insalyon.creatis.grida.server.Configuration;
 import fr.insalyon.creatis.grida.common.Communication;
 import fr.insalyon.creatis.grida.common.bean.Operation;
+import fr.insalyon.creatis.grida.server.Configuration;
 import fr.insalyon.creatis.grida.server.business.BusinessException;
 import fr.insalyon.creatis.grida.server.business.OperationBusiness;
 import fr.insalyon.creatis.grida.server.business.PoolBusiness;
-import java.io.File;
+import fr.insalyon.creatis.grida.server.execution.Command;
 
 /**
  *
@@ -86,7 +85,9 @@ public class UploadFileCommand extends Command {
                     sb.append(se);
                 }
                 Configuration.getInstance().setPreferredSEs(sb.toString());
-
+                operationBusiness.replicateFile(destPath);
+                
+            } else {
                 try {
                     new PoolBusiness().addOperation(proxyFileName, destPath, "",
                             Operation.Type.Replicate.name(), proxyFileName);
