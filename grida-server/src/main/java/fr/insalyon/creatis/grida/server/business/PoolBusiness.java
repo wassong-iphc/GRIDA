@@ -183,8 +183,11 @@ public class PoolBusiness {
 
                 if (operation.getType() == Operation.Type.Download) {
 
-                    String name = operation.getDest() + "/"
+                    String name = operation.getDest().endsWith(".zip") ?
+                            operation.getDest() :
+                            operation.getDest() + "/"
                             + FilenameUtils.getName(operation.getSource());
+                    
                     FileUtils.deleteQuietly(new File(name));
 
                     poolDAO.removeOperationBySourceAndType(operation.getSource(),
