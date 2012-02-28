@@ -63,7 +63,8 @@ public class GetRemoteFolderCommand extends Command {
     public void execute() {
 
         try {
-            String destPath = operationBusiness.downloadFolder(localDirPath, remoteDirPath);
+            String destPath = operationBusiness.downloadFolder(
+                    localDirPath, remoteDirPath, true);
             communication.sendMessage(destPath);
 
         } catch (BusinessException ex) {

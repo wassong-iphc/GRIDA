@@ -151,8 +151,8 @@ public class OperationBusiness {
      * @return
      * @throws BusinessException
      */
-    public String downloadFolder(String localDirPath, String remoteDirPath)
-            throws BusinessException {
+    public String downloadFolder(String localDirPath, String remoteDirPath,
+            boolean zipResult) throws BusinessException {
 
         try {
             File localDir = new File(localDirPath);
@@ -165,7 +165,7 @@ public class OperationBusiness {
                     try {
                         if (data.getType() == GridData.Type.Folder) {
                             downloadFolder(localDirPath + "/" + data.getName(),
-                                    remoteDirPath + "/" + data.getName());
+                                    remoteDirPath + "/" + data.getName(), false);
                         } else {
                             downloadFile(localDirPath, data.getName(),
                                     remoteDirPath + "/" + data.getName());
@@ -178,10 +178,14 @@ public class OperationBusiness {
                     createErrorFile(errorFiles, localDirPath);
                 }
 
-                FolderZipper.zipFolder(localDir.getAbsolutePath(), localDir.getAbsolutePath() + ".zip");
-                FileUtils.deleteDirectory(new File(localDir.getAbsolutePath()));
-                return localDir.getAbsolutePath() + ".zip";
+                if (zipResult) {
+                    FolderZipper.zipFolder(localDir.getAbsolutePath(), localDir.getAbsolutePath() + ".zip");
+                    FileUtils.deleteDirectory(new File(localDir.getAbsolutePath()));
+                    return localDir.getAbsolutePath() + ".zip";
                 
+                } else {
+                    return localDir.getAbsolutePath();
+                }
             } else {
                 String error = "Remote folder does not exist: " + remoteDirPath;
                 logger.error(error);

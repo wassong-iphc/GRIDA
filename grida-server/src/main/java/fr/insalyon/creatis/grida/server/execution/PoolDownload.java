@@ -125,7 +125,7 @@ public class PoolDownload extends Thread {
 
                     if (operationBusiness.isFolder(operation.getSource())) {
                         String zipFile = operationBusiness.downloadFolder(
-                                operation.getDest(), operation.getSource());
+                                operation.getDest(), operation.getSource(), true);
                         operation.setDest(zipFile);
 
                     } else {
