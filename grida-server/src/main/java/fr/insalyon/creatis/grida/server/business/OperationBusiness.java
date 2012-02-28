@@ -66,10 +66,10 @@ public class OperationBusiness {
     }
 
     /**
-     * 
+     *
      * @param path
      * @return
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public long getModificationDate(String path) throws BusinessException {
 
@@ -86,10 +86,10 @@ public class OperationBusiness {
     }
 
     /**
-     * 
+     *
      * @param path
      * @return
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public List<GridData> listFilesAndFolders(String path) throws BusinessException {
 
@@ -145,11 +145,11 @@ public class OperationBusiness {
 
     /**
      * Downloads a remote folder to a local folder.
-     * 
+     *
      * @param localDirPath
      * @param remoteDirPath
      * @return
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public String downloadFolder(String localDirPath, String remoteDirPath)
             throws BusinessException {
@@ -159,28 +159,34 @@ public class OperationBusiness {
             localDir.mkdirs();
 
             List<String> errorFiles = new ArrayList<String>();
+            if (exist(remoteDirPath)) {
 
-            for (GridData data : listFilesAndFolders(remoteDirPath)) {
-                try {
-                    if (data.getType() == GridData.Type.Folder) {
-                        downloadFolder(localDirPath + "/" + data.getName(),
-                                remoteDirPath + "/" + data.getName());
-                    } else {
-                        downloadFile(localDirPath, data.getName(),
-                                remoteDirPath + "/" + data.getName());
+                for (GridData data : listFilesAndFolders(remoteDirPath)) {
+                    try {
+                        if (data.getType() == GridData.Type.Folder) {
+                            downloadFolder(localDirPath + "/" + data.getName(),
+                                    remoteDirPath + "/" + data.getName());
+                        } else {
+                            downloadFile(localDirPath, data.getName(),
+                                    remoteDirPath + "/" + data.getName());
+                        }
+                    } catch (BusinessException ex) {
+                        errorFiles.add(remoteDirPath + "/" + data.getName());
                     }
-                } catch (BusinessException ex) {
-                    errorFiles.add(remoteDirPath + "/" + data.getName());
                 }
-            }
-            if (!errorFiles.isEmpty()) {
-                createErrorFile(errorFiles, localDirPath);
-            }
+                if (!errorFiles.isEmpty()) {
+                    createErrorFile(errorFiles, localDirPath);
+                }
 
-            FolderZipper.zipFolder(localDir.getAbsolutePath(), localDir.getAbsolutePath() + ".zip");
-            FileUtils.deleteDirectory(new File(localDir.getAbsolutePath()));
-            return localDir.getAbsolutePath() + ".zip";
-
+                FolderZipper.zipFolder(localDir.getAbsolutePath(), localDir.getAbsolutePath() + ".zip");
+                FileUtils.deleteDirectory(new File(localDir.getAbsolutePath()));
+                return localDir.getAbsolutePath() + ".zip";
+                
+            } else {
+                String error = "Remote folder does not exist: " + remoteDirPath;
+                logger.error(error);
+                throw new BusinessException(error);
+            }
         } catch (IOException ex) {
             logger.error(ex);
             throw new BusinessException(ex);
@@ -189,12 +195,12 @@ public class OperationBusiness {
 
     /**
      * Downloads an array of files to a local folder and zips it.
-     * 
+     *
      * @param localDirPath
      * @param remoteFilesPath
      * @param packName
      * @return
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public String downloadFiles(String localDirPath,
             String[] remoteFilesPath, String packName) throws BusinessException {
@@ -225,7 +231,7 @@ public class OperationBusiness {
             FileUtils.deleteDirectory(file);
 
             return zipName;
-            
+
         } catch (IOException ex) {
             logger.error(ex);
             throw new BusinessException(ex);
@@ -234,11 +240,11 @@ public class OperationBusiness {
 
     /**
      * Uploads a local file to a remote folder.
-     * 
+     *
      * @param localFilePath
      * @param remoteDir
      * @return
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public String uploadFile(String localFilePath, String remoteDir) throws BusinessException {
 
@@ -256,9 +262,9 @@ public class OperationBusiness {
 
     /**
      * Replicates a file to the list of preferred SEs.
-     * 
+     *
      * @param sourcePath
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public void replicateFile(String sourcePath) throws BusinessException {
 
@@ -275,10 +281,10 @@ public class OperationBusiness {
 
     /**
      * Deletes a file/directory.
-     * 
+     *
      * @param proxy
      * @param path
-     * @throws Exception 
+     * @throws Exception
      */
     public void delete(String path) throws BusinessException {
 
@@ -303,9 +309,9 @@ public class OperationBusiness {
 
     /**
      * Creates a new remote folder.
-     * 
+     *
      * @param newFolder
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public void createFolder(String newFolder) throws BusinessException {
 
@@ -321,10 +327,10 @@ public class OperationBusiness {
     }
 
     /**
-     * 
+     *
      * @param oldPath
      * @param newPath
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public void rename(String oldPath, String newPath) throws BusinessException {
 
@@ -340,10 +346,10 @@ public class OperationBusiness {
     }
 
     /**
-     * 
+     *
      * @param path
      * @return
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public boolean exist(String path) throws BusinessException {
 
@@ -360,10 +366,10 @@ public class OperationBusiness {
     }
 
     /**
-     * 
+     *
      * @param path
      * @return
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public boolean isFolder(String path) throws BusinessException {
 
@@ -377,27 +383,27 @@ public class OperationBusiness {
             throw new BusinessException(ex);
         }
     }
-    
+
     public long getFileSize(String path) throws BusinessException {
-        
+
         try {
             if (configuration.isLcgCommandsAvailable()) {
                 return LCGOperations.getFileSize(proxy, path);
             } else {
                 return VletOperations.getFileSize(proxy, path);
             }
-            
+
         } catch (OperationException ex) {
             throw new BusinessException(ex);
         }
     }
 
     /**
-     * 
+     *
      * @param errorFiles
      * @param localDirPath
      * @return
-     * @throws IOException 
+     * @throws IOException
      */
     private String createErrorFile(List<String> errorFiles, String localDirPath)
             throws IOException {
