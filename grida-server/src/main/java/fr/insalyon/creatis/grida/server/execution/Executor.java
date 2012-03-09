@@ -39,23 +39,9 @@ import fr.insalyon.creatis.grida.common.Constants;
 import fr.insalyon.creatis.grida.common.ExecutorConstants;
 import fr.insalyon.creatis.grida.server.execution.cache.AllCachedFilesCommand;
 import fr.insalyon.creatis.grida.server.execution.cache.DeleteCachedFileCommand;
-import fr.insalyon.creatis.grida.server.execution.command.CreateFolderCommand;
-import fr.insalyon.creatis.grida.server.execution.command.DeleteCommand;
-import fr.insalyon.creatis.grida.server.execution.command.ExistDataCommand;
-import fr.insalyon.creatis.grida.server.execution.command.GetModificationDateCommand;
-import fr.insalyon.creatis.grida.server.execution.command.GetRemoteFileCommand;
-import fr.insalyon.creatis.grida.server.execution.command.GetRemoteFolderCommand;
-import fr.insalyon.creatis.grida.server.execution.command.ListFilesAndFoldersCommand;
-import fr.insalyon.creatis.grida.server.execution.command.RenameCommand;
-import fr.insalyon.creatis.grida.server.execution.command.ReplicatePreferredSEsCommand;
-import fr.insalyon.creatis.grida.server.execution.command.UploadFileCommand;
-import fr.insalyon.creatis.grida.server.execution.pool.PoolAddOperationCommand;
-import fr.insalyon.creatis.grida.server.execution.pool.PoolAllOperationsCommand;
-import fr.insalyon.creatis.grida.server.execution.pool.PoolLimitedOperationsByDateCommand;
-import fr.insalyon.creatis.grida.server.execution.pool.PoolOperationByIdCommand;
-import fr.insalyon.creatis.grida.server.execution.pool.PoolOperationsByUserCommand;
-import fr.insalyon.creatis.grida.server.execution.pool.PoolRemoveOperationByIdCommand;
-import fr.insalyon.creatis.grida.server.execution.pool.PoolRemoveOperationsByUserCommand;
+import fr.insalyon.creatis.grida.server.execution.command.*;
+import fr.insalyon.creatis.grida.server.execution.pool.*;
+import fr.insalyon.creatis.grida.server.execution.zombie.ZombieGetListCommand;
 import java.io.IOException;
 import org.apache.log4j.Logger;
 
@@ -78,8 +64,7 @@ public class Executor extends Thread {
         try {
             String message = communication.getMessage();
             if (message != null) {
-                String[] tokens = message.split(Constants.MSG_SEP_1);
-                Command command = parseCommand(tokens);
+                Command command = parseCommand(message);
 
                 if (command != null) {
                     command.execute();
@@ -92,9 +77,10 @@ public class Executor extends Thread {
         }
     }
 
-    private Command parseCommand(String[] tokens) {
+    private Command parseCommand(String message) {
 
         try {
+            String[] tokens = message.split(Constants.MSG_SEP_1);
             int command = new Integer(tokens[0]);
             String proxy = tokens[1];
 
@@ -162,8 +148,12 @@ public class Executor extends Thread {
                 case ExecutorConstants.POOL_LIMITED_OPERATIONS_BY_DATE:
                     return new PoolLimitedOperationsByDateCommand(communication, proxy, tokens[2], tokens[3], tokens[4]);
 
+                // Zombie Operations
+                case ExecutorConstants.ZOM_GET:
+                    return new ZombieGetListCommand(communication, proxy);
+
                 default:
-                    logException(new Exception("Command not recognized: " + tokens));
+                    logException(new Exception("Command not recognized: " + message));
             }
 
         } catch (NumberFormatException ex) {

@@ -36,6 +36,8 @@ package fr.insalyon.creatis.grida.server.operation;
 
 import fr.insalyon.creatis.grida.common.bean.GridData;
 import fr.insalyon.creatis.grida.server.Configuration;
+import fr.insalyon.creatis.grida.server.dao.DAOException;
+import fr.insalyon.creatis.grida.server.dao.DAOFactory;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -46,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
@@ -58,11 +61,11 @@ public class LCGOperations {
     private final static Logger logger = Logger.getLogger(LCGOperations.class);
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
      * @return
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static long getModificationDate(String proxy, String path) throws OperationException {
 
@@ -115,11 +118,11 @@ public class LCGOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
      * @return
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static List<GridData> listFilesAndFolders(String proxy, String path)
             throws OperationException {
@@ -196,13 +199,13 @@ public class LCGOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param localDirPath
      * @param fileName
      * @param remoteFilePath
      * @return
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static String downloadFile(String proxy, String localDirPath,
             String fileName, String remoteFilePath) throws OperationException {
@@ -249,12 +252,12 @@ public class LCGOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param localFilePath
      * @param remoteDir
      * @return
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static String uploadFile(String proxy, String localFilePath,
             String remoteDir) throws OperationException {
@@ -312,11 +315,11 @@ public class LCGOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param sourcePath
      * @return
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static void replicateFile(String proxy, String sourcePath)
             throws OperationException {
@@ -361,11 +364,11 @@ public class LCGOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
      * @return
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static boolean isDir(String proxy, String path) throws OperationException {
 
@@ -402,10 +405,10 @@ public class LCGOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
-     * @throws Operation Exception 
+     * @throws Operation Exception
      */
     public static void deleteFolder(String proxy, String path) throws OperationException {
 
@@ -452,11 +455,11 @@ public class LCGOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
      * @return
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static void deleteFile(String proxy, String path) throws OperationException {
 
@@ -483,8 +486,14 @@ public class LCGOperations {
             r.close();
 
             if (process.exitValue() != 0 && !cout.contains("No such file or directory")) {
-                logger.error("Unable to delete file '" + lfn + "': " + cout);
-                throw new OperationException(cout);
+
+                if (cout.contains("SRM_INVALID_PATH")) {
+                    unregister(proxy, path, getGUID(proxy, path), getSURL(proxy, path));
+
+                } else {
+                    logger.error("Unable to delete file '" + lfn + "': " + cout);
+                    throw new OperationException(cout);
+                }
             }
             process = null;
 
@@ -498,10 +507,10 @@ public class LCGOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
-     * @throws Exception 
+     * @throws Exception
      */
     public static void createFolder(String proxy, String path) throws OperationException {
 
@@ -538,11 +547,11 @@ public class LCGOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param oldPath
      * @param newPath
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static void rename(String proxy, String oldPath, String newPath) throws OperationException {
 
@@ -581,11 +590,11 @@ public class LCGOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
      * @return
-     * @throws Exception 
+     * @throws Exception
      */
     public static boolean exists(String proxy, String path) throws OperationException {
 
@@ -623,11 +632,11 @@ public class LCGOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
      * @return
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static long getFileSize(String proxy, String path) throws OperationException {
 
@@ -657,6 +666,139 @@ public class LCGOperations {
 
             return size;
 
+        } catch (InterruptedException ex) {
+            logger.error(ex);
+            throw new OperationException(ex);
+        } catch (IOException ex) {
+            logger.error(ex);
+            throw new OperationException(ex);
+        }
+    }
+
+    /**
+     *
+     * @param proxy
+     * @param path
+     * @return
+     * @throws OperationException
+     */
+    private static String getGUID(String proxy, String path) throws OperationException {
+
+        try {
+            logger.info("[LCG] getting GUID of: " + path);
+            Process process = OperationsUtil.getProcess(proxy, "lcg-lg", "lfn:" + path);
+
+            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String s = null;
+            String cout = "";
+
+            String guid = null;
+            while ((s = r.readLine()) != null) {
+                cout += s + "\n";
+                guid = s;
+            }
+            process.waitFor();
+            OperationsUtil.close(process);
+            r.close();
+
+            if (process.exitValue() != 0) {
+                logger.error("[LCG] Unable to get GUID of '" + path + "': " + cout);
+                throw new OperationException(cout);
+            }
+            process = null;
+
+            return guid;
+
+        } catch (InterruptedException ex) {
+            logger.error(ex);
+            throw new OperationException(ex);
+        } catch (IOException ex) {
+            logger.error(ex);
+            throw new OperationException(ex);
+        }
+    }
+
+    /**
+     *
+     * @param proxy
+     * @param path
+     * @return
+     * @throws OperationException
+     */
+    private static String[] getSURL(String proxy, String path) throws OperationException {
+
+        try {
+            logger.info("[LCG] getting SURL of: " + path);
+            Process process = OperationsUtil.getProcess(proxy, "lcg-lr", "lfn:" + path);
+
+            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String s = null;
+            String cout = "";
+
+            List<String> surls = new ArrayList<String>();
+            while ((s = r.readLine()) != null) {
+                cout += s + "\n";
+                surls.add(s);
+            }
+            process.waitFor();
+            OperationsUtil.close(process);
+            r.close();
+
+            if (process.exitValue() != 0) {
+                logger.error("[LCG] Unable to get SURL of '" + path + "': " + cout);
+                throw new OperationException(cout);
+            }
+            process = null;
+
+            return surls.toArray(new String[]{});
+
+        } catch (InterruptedException ex) {
+            logger.error(ex);
+            throw new OperationException(ex);
+        } catch (IOException ex) {
+            logger.error(ex);
+            throw new OperationException(ex);
+        }
+    }
+
+    /**
+     *
+     * @param proxy
+     * @param path
+     * @param guid
+     * @param surls
+     * @throws OperationException
+     */
+    private static void unregister(String proxy, String path, String guid,
+            String... surls) throws OperationException {
+
+        try {
+            logger.info("[LCG] Unregistering: " + path);
+            for (String surl : surls) {
+
+                Process process = OperationsUtil.getProcess(proxy, "lcg-uf", "-v", guid, surl);
+
+                BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String s = null;
+                String cout = "";
+
+                while ((s = r.readLine()) != null) {
+                    cout += s + "\n";
+                }
+                process.waitFor();
+                OperationsUtil.close(process);
+                r.close();
+
+                if (process.exitValue() != 0) {
+                    logger.error("[LCG] Unable to unregister '" + path + "': " + cout);
+                    throw new OperationException(cout);
+                }
+                process = null;
+                DAOFactory.getDAOFactory().getZombieFilesDAO().add(surl);
+            }
+
+        } catch (DAOException ex) {
+            throw new OperationException(ex);
         } catch (InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);

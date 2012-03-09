@@ -32,38 +32,18 @@
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL license and that you accept its terms.
  */
-package fr.insalyon.creatis.grida.common;
+package fr.insalyon.creatis.grida.server.dao;
+
+import fr.insalyon.creatis.grida.common.bean.ZombieFile;
+import java.util.List;
 
 /**
  *
  * @author Rafael Silva
  */
-public class ExecutorConstants {
+public interface ZombieFilesDAO {
 
-    // General Commands
-    public static final int COM_GET_REMOTE_FILE = 101;
-    public static final int COM_GET_REMOTE_FOLDER = 102;
-    public static final int COM_LIST_FILES_AND_FOLDERS = 103;
-    public static final int COM_GET_MODIFICATION_DATE = 104;
-    public static final int COM_UPLOAD_FILE = 105;
-    public static final int COM_UPLOAD_FILE_TO_SES = 106;
-    public static final int COM_REPLICATE_PREFERRED_SES = 107;
-    public static final int COM_DELETE = 108;
-    public static final int COM_CREATE_FOLDER = 109;
-    public static final int COM_RENAME = 110;
-    public static final int COM_EXIST = 111;
-    // Cache Commands
-    public static final int CACHE_LIST_FILES = 201;
-    public static final int CACHE_DELETE_FILE = 202;
-    // Pool
-    public static final int POOL_ADD_OPERATION = 301;
-    public static final int POOL_OPERATION_BY_ID = 302;
-    public static final int POOL_OPERATIONS_BY_USER = 303;
-    public static final int POOL_REMOVE_OPERATION_BY_ID = 304;
-    public static final int POOL_REMOVE_OPERATIONS_BY_USER = 305;
-    public static final int POOL_ALL_OPERATIONS = 306;
-    public static final int POOL_LIMITED_OPERATIONS_BY_DATE = 307;
-    // Zombie Commands
-    public static final int ZOM_GET = 401;
-    public static final int ZOM_DELETE = 402;
+    public void add(String srm) throws DAOException;
+    
+    public List<ZombieFile> getZombieFiles() throws DAOException;
 }

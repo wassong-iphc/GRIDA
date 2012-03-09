@@ -37,6 +37,7 @@ package fr.insalyon.creatis.grida.server.dao;
 import fr.insalyon.creatis.grida.server.dao.h2.CacheFileData;
 import fr.insalyon.creatis.grida.server.dao.h2.CacheListData;
 import fr.insalyon.creatis.grida.server.dao.h2.PoolData;
+import fr.insalyon.creatis.grida.server.dao.h2.ZombieFilesData;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -140,6 +141,19 @@ public class H2DAOFactory extends DAOFactory {
         } catch (SQLException ex) {
             logger.info("Table CacheFile already exists!");
         }
+
+        try {
+            Statement stat = connection.createStatement();
+            stat.executeUpdate(
+                    "CREATE TABLE ZombieFiles ("
+                    + "srm VARCHAR(255), "
+                    + "registration TIMESTAMP, "
+                    + "PRIMARY KEY(srm)"
+                    + ")");
+
+        } catch (SQLException ex) {
+            logger.info("Table already exists!");
+        }
     }
 
     @Override
@@ -155,6 +169,11 @@ public class H2DAOFactory extends DAOFactory {
     @Override
     public CacheFileDAO getCacheFileDAO() {
         return CacheFileData.getInstance(connection);
+    }
+
+    @Override
+    public ZombieFilesDAO getZombieFilesDAO() {
+        return ZombieFilesData.getInstance(connection);
     }
 
     private void logException(Exception ex) {

@@ -67,4 +67,6 @@ public abstract class DAOFactory {
     public abstract CacheListDAO getCacheListDAO();
 
     public abstract CacheFileDAO getCacheFileDAO();
+    
+    public abstract ZombieFilesDAO getZombieFilesDAO();
 }
