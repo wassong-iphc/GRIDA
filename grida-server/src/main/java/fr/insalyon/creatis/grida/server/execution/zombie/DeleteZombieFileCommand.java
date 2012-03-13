@@ -32,20 +32,41 @@
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL license and that you accept its terms.
  */
-package fr.insalyon.creatis.grida.server.dao;
+package fr.insalyon.creatis.grida.server.execution.zombie;
 
-import fr.insalyon.creatis.grida.common.bean.ZombieFile;
-import java.util.List;
+import fr.insalyon.creatis.grida.common.Communication;
+import fr.insalyon.creatis.grida.server.business.BusinessException;
+import fr.insalyon.creatis.grida.server.business.ZombieBusiness;
+import fr.insalyon.creatis.grida.server.execution.Command;
 
 /**
  *
  * @author Rafael Silva
  */
-public interface ZombieFilesDAO {
+public class DeleteZombieFileCommand extends Command {
 
-    public void add(String surl) throws DAOException;
-    
-    public List<ZombieFile> getZombieFiles() throws DAOException;
-    
-    public void delete(String surl) throws DAOException;
+    private String surl;
+    private ZombieBusiness zombieBusiness;
+
+    public DeleteZombieFileCommand(Communication communication,
+            String proxyFileName, String surl) {
+        
+        super(communication, proxyFileName);
+        this.surl = surl;
+        
+        zombieBusiness = new ZombieBusiness();
+    }
+
+    @Override
+    public void execute() {
+
+        try {
+            zombieBusiness.deleteZombieFile(surl);
+            communication.sendSucessMessage();
+
+        } catch (BusinessException ex) {
+            communication.sendErrorMessage(ex.getMessage());
+        }
+        communication.sendEndOfMessage();
+    }
 }

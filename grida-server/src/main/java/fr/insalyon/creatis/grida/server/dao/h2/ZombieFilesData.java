@@ -104,4 +104,19 @@ public class ZombieFilesData implements ZombieFilesDAO {
             throw new DAOException(ex);
         }
     }
+    
+    @Override
+    public void delete(String surl) throws DAOException {
+        try {
+            PreparedStatement ps = connection.prepareStatement("DELETE "
+                    + "FROM ZombieFiles WHERE srm = ?");
+
+            ps.setString(1, surl);
+            ps.execute();
+
+        } catch (SQLException ex) {
+            logger.error(ex);
+            throw new DAOException(ex);
+        }
+    }
 }

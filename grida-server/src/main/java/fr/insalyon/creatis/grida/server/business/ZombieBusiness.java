@@ -69,4 +69,20 @@ public class ZombieBusiness {
             throw new BusinessException(ex);
         }
     }
+    
+    /**
+     * Deletes a zombie file.
+     * 
+     * @param surl
+     * @throws BusinessException 
+     */
+    public void deleteZombieFile(String surl) throws BusinessException {
+
+        try {
+            zombieFilesDAO.delete(surl);
+
+        } catch (DAOException ex) {
+            throw new BusinessException(ex);
+        }
+    }
 }

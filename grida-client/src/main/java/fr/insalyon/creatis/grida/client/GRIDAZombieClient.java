@@ -91,4 +91,27 @@ public class GRIDAZombieClient extends AbstractGRIDAClient {
             throw new GRIDAClientException(ex);
         }
     }
+    
+    /**
+     * Deletes a zombie file.
+     * 
+     * @param surl SURL of a zombie file
+     * @throws GRIDAClientException 
+     */
+    public void delete(String surl) throws GRIDAClientException {
+
+        try {
+            Communication communication = getCommunication();
+            communication.sendMessage(
+                    ExecutorConstants.ZOM_DELETE + Constants.MSG_SEP_1
+                    + proxyPath + Constants.MSG_SEP_1 + surl);
+            communication.sendEndOfMessage();
+
+            communication.getMessage();
+            communication.close();
+
+        } catch (IOException ex) {
+            throw new GRIDAClientException(ex);
+        }
+    }
 }

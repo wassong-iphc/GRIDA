@@ -41,6 +41,7 @@ import fr.insalyon.creatis.grida.server.execution.cache.AllCachedFilesCommand;
 import fr.insalyon.creatis.grida.server.execution.cache.DeleteCachedFileCommand;
 import fr.insalyon.creatis.grida.server.execution.command.*;
 import fr.insalyon.creatis.grida.server.execution.pool.*;
+import fr.insalyon.creatis.grida.server.execution.zombie.DeleteZombieFileCommand;
 import fr.insalyon.creatis.grida.server.execution.zombie.ZombieGetListCommand;
 import java.io.IOException;
 import org.apache.log4j.Logger;
@@ -151,6 +152,9 @@ public class Executor extends Thread {
                 // Zombie Operations
                 case ExecutorConstants.ZOM_GET:
                     return new ZombieGetListCommand(communication, proxy);
+                    
+                case ExecutorConstants.ZOM_DELETE:
+                    return new DeleteZombieFileCommand(communication, proxy, tokens[2]);
 
                 default:
                     logException(new Exception("Command not recognized: " + message));
