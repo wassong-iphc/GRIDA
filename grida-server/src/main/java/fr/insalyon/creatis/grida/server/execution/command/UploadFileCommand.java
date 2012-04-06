@@ -90,8 +90,9 @@ public class UploadFileCommand extends Command {
             } else {
                 try {
                     new PoolBusiness().addOperation(proxyFileName, destPath, "",
-                            Operation.Type.Replicate.name(), proxyFileName);
+                            Operation.Type.Replicate, proxyFileName);
                 } catch (BusinessException ex) {
+                    // do nothing
                 }
             }
             communication.sendMessage(destPath);

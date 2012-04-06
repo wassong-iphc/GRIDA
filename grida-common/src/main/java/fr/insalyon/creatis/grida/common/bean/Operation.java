@@ -76,8 +76,9 @@ public class Operation {
      * @param user
      */
     public Operation(String id, Date registration, String source, String dest,
-            String type, String status, String user, double size, int progress) {
-        this(id, registration, source, dest, type, status, user, "", 0, size, progress);
+            Type type, Status status, String user, double size, int progress) {
+        this(id, registration, source, dest, type, status, user, "", 0, size, 
+                progress);
     }
 
     /**
@@ -89,9 +90,10 @@ public class Operation {
      * @param user
      * @param proxy
      */
-    public Operation(String id, String source, String dest, String type,
+    public Operation(String id, String source, String dest, Type type,
             String user, String proxy, double size) {
-        this(id, new Date(), source, dest, type, Status.Queued.toString(), user, proxy, 0, size);
+        this(id, new Date(), source, dest, type, Status.Queued, 
+                user, proxy, 0, size);
     }
 
     /**
@@ -108,13 +110,15 @@ public class Operation {
      * @param size
      */
     public Operation(String id, Date registration, String source, String dest,
-            String type, String status, String user, String proxy,
+            Type type, Status status, String user, String proxy,
             int retrycount, double size) {
-        this(id, registration, source, dest, type, status, user, proxy, retrycount, size, 0);
+        
+        this(id, registration, source, dest, type, status, user, proxy, 
+                retrycount, size, 0);
     }
 
     /**
-     *
+     * 
      * @param id
      * @param registration
      * @param source
@@ -125,18 +129,18 @@ public class Operation {
      * @param proxy
      * @param retrycount
      * @param size
-     * @param progress
+     * @param progress 
      */
     public Operation(String id, Date registration, String source, String dest,
-            String type, String status, String user, String proxy,
+            Type type, Status status, String user, String proxy,
             int retrycount, double size, int progress) {
 
         this.id = id;
         this.registration = registration;
         this.source = source;
         this.dest = dest;
-        this.type = Type.valueOf(type);
-        this.status = Status.valueOf(status);
+        this.type = type;
+        this.status = status;
         this.user = user;
         this.proxy = proxy;
         this.retrycount = retrycount;

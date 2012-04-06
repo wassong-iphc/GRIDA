@@ -34,10 +34,10 @@
  */
 package fr.insalyon.creatis.grida.server.execution.command;
 
-import fr.insalyon.creatis.grida.server.execution.Command;
 import fr.insalyon.creatis.grida.common.Communication;
 import fr.insalyon.creatis.grida.server.business.BusinessException;
 import fr.insalyon.creatis.grida.server.business.OperationBusiness;
+import fr.insalyon.creatis.grida.server.execution.Command;
 
 /**
  *

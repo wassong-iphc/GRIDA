@@ -34,9 +34,9 @@
  */
 package fr.insalyon.creatis.grida.server.business;
 
-import condor.classad.Constant;
 import fr.insalyon.creatis.grida.common.Constants;
 import fr.insalyon.creatis.grida.common.bean.Operation;
+import fr.insalyon.creatis.grida.common.bean.Operation.Type;
 import fr.insalyon.creatis.grida.server.dao.DAOException;
 import fr.insalyon.creatis.grida.server.dao.DAOFactory;
 import fr.insalyon.creatis.grida.server.dao.PoolDAO;
@@ -66,32 +66,32 @@ public class PoolBusiness {
     }
 
     /**
-     * 
+     *
      * @param proxyFileName
      * @param source
      * @param dest
      * @param type
      * @param user
      * @return
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public String addOperation(String proxyFileName, String source, String dest,
-            String type, String user) throws BusinessException {
+            Type type, String user) throws BusinessException {
 
         try {
             String id = type + "-" + System.nanoTime();
             OperationBusiness operationBusiness = new OperationBusiness(proxyFileName);
-            
+
             double size = 0;
-            if (type.equals(Operation.Type.Download.name())) {
+            if (type == Type.Download) {
                 size = operationBusiness.getFileSize(source);
-            
-            } else if (type.equals(Operation.Type.Download_Files.name())) {
+
+            } else if (type == Type.Download_Files) {
                 for (String src : source.split(Constants.MSG_SEP_2)) {
                     size += operationBusiness.getFileSize(src);
                 }
             }
-            
+
             Operation op = new Operation(id, source, dest, type, user,
                     proxyFileName, size);
             poolDAO.addOperation(op);
@@ -121,9 +121,8 @@ public class PoolBusiness {
     }
 
     /**
-     * 
-     * @return
-     * @throws BusinessException 
+     *
+     * @return @throws BusinessException
      */
     public List<Operation> getOperations() throws BusinessException {
 
@@ -136,10 +135,10 @@ public class PoolBusiness {
     }
 
     /**
-     * 
+     *
      * @param id
      * @return
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public Operation getOperationById(String id) throws BusinessException {
 
@@ -152,10 +151,10 @@ public class PoolBusiness {
     }
 
     /**
-     * 
+     *
      * @param user
      * @return
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public List<Operation> getOperationsByUser(String user) throws BusinessException {
 
@@ -168,9 +167,9 @@ public class PoolBusiness {
     }
 
     /**
-     * 
+     *
      * @param id
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public void removeOperationById(String id) throws BusinessException {
 
@@ -178,37 +177,17 @@ public class PoolBusiness {
             logger.info("Deleting pool operation '" + id + "'.");
             Operation operation = poolDAO.getOperationById(id);
             poolDAO.removeOperationById(id);
+            removeOperation(operation);
 
-            if (operation.getStatus() == Operation.Status.Done) {
-
-                if (operation.getType() == Operation.Type.Download) {
-
-                    String name = operation.getDest().endsWith(".zip") ?
-                            operation.getDest() :
-                            operation.getDest() + "/"
-                            + FilenameUtils.getName(operation.getSource());
-                    
-                    FileUtils.deleteQuietly(new File(name));
-
-                    poolDAO.removeOperationBySourceAndType(operation.getSource(),
-                            Operation.Type.Download);
-
-                } else if (operation.getType() == Operation.Type.Download_Files) {
-
-                    FileUtils.deleteQuietly(new File(operation.getDest()));
-                    poolDAO.removeOperationByDestAndType(operation.getDest(),
-                            Operation.Type.Download_Files);
-                }
-            }
         } catch (DAOException ex) {
             throw new BusinessException(ex);
         }
     }
 
     /**
-     * 
+     *
      * @param user
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public void removeOperationsByUser(String user) throws BusinessException {
 
@@ -219,23 +198,7 @@ public class PoolBusiness {
             poolDAO.removeOperationsByUser(user);
 
             for (Operation operation : operations) {
-                if (operation.getStatus() == Operation.Status.Done) {
-
-                    if (operation.getType() == Operation.Type.Download) {
-
-                        String name = operation.getDest() + "/"
-                                + new File(operation.getSource()).getName();
-                        new File(name).delete();
-                        poolDAO.removeOperationBySourceAndType(operation.getSource(),
-                                Operation.Type.Download);
-
-                    } else if (operation.getType() == Operation.Type.Download_Files) {
-
-                        new File(operation.getDest()).delete();
-                        poolDAO.removeOperationByDestAndType(operation.getDest(),
-                                Operation.Type.Download_Files);
-                    }
-                }
+                removeOperation(operation);
             }
         } catch (DAOException ex) {
             throw new BusinessException(ex);
@@ -243,12 +206,12 @@ public class PoolBusiness {
     }
 
     /**
-     * 
+     *
      * @param user
      * @param limit
      * @param startDate
      * @return
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public List<Operation> getOperationsByLimitDateUser(String user, int limit,
             Date startDate) throws BusinessException {
@@ -258,6 +221,38 @@ public class PoolBusiness {
 
         } catch (DAOException ex) {
             throw new BusinessException(ex);
+        }
+    }
+
+    /**
+     *
+     * @param operation
+     * @throws BusinessException
+     */
+    private void removeOperation(Operation operation) throws DAOException {
+
+        if (operation.getStatus() == Operation.Status.Done) {
+
+            if (operation.getType() == Operation.Type.Download) {
+
+                String name = operation.getDest().endsWith(".zip")
+                        ? operation.getDest()
+                        : operation.getDest() + "/"
+                        + FilenameUtils.getName(operation.getSource());
+
+                logger.info("Deleting '" + name + "'.");
+                FileUtils.deleteQuietly(new File(name));
+
+                poolDAO.removeOperationBySourceAndType(operation.getSource(),
+                        Operation.Type.Download);
+
+            } else if (operation.getType() == Operation.Type.Download_Files) {
+
+                logger.info("Deleting '" + operation.getDest() + "'.");
+                FileUtils.deleteQuietly(new File(operation.getDest()));
+                poolDAO.removeOperationByDestAndType(operation.getDest(),
+                        Operation.Type.Download_Files);
+            }
         }
     }
 }

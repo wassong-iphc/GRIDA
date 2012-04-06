@@ -36,6 +36,7 @@
 package fr.insalyon.creatis.grida.server.execution.pool;
 
 import fr.insalyon.creatis.grida.common.Communication;
+import fr.insalyon.creatis.grida.common.bean.Operation.Type;
 import fr.insalyon.creatis.grida.server.business.BusinessException;
 import fr.insalyon.creatis.grida.server.business.PoolBusiness;
 import fr.insalyon.creatis.grida.server.execution.Command;
@@ -65,12 +66,15 @@ public class PoolAddOperationCommand extends Command {
     public void execute() {
 
         try {
+            Type operationType = Type.valueOf(operation);
             PoolBusiness poolBusiness = new PoolBusiness();
             String id = poolBusiness.addOperation(proxyFileName, source, dest, 
-                    operation, user);
+                    operationType, user);
             
             communication.sendMessage(id);
 
+        } catch (IllegalArgumentException ex) {
+            communication.sendErrorMessage(ex.getMessage());
         } catch (BusinessException ex) {
             communication.sendErrorMessage(ex.getMessage());
         }

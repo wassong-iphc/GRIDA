@@ -121,9 +121,10 @@ public class PoolUpload extends Thread {
                 String path = operationBusiness.uploadFile(operation.getSource(), operation.getDest());
                 try {
                     new PoolBusiness().addOperation(operation.getProxy(), path, "",
-                            Operation.Type.Replicate.name(), operation.getUser());
+                            Operation.Type.Replicate, operation.getUser());
 
                 } catch (BusinessException ex) {
+                    // do nothing
                 }
                 updateStatus(operation, Status.Done);
 

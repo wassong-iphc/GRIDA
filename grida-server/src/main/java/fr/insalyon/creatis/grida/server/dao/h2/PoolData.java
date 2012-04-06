@@ -35,6 +35,8 @@
 package fr.insalyon.creatis.grida.server.dao.h2;
 
 import fr.insalyon.creatis.grida.common.bean.Operation;
+import fr.insalyon.creatis.grida.common.bean.Operation.Status;
+import fr.insalyon.creatis.grida.common.bean.Operation.Type;
 import fr.insalyon.creatis.grida.server.dao.DAOException;
 import fr.insalyon.creatis.grida.server.dao.PoolDAO;
 import java.sql.*;
@@ -129,10 +131,8 @@ public class PoolData implements PoolDAO {
     public List<Operation> getOperationsByUser(String user) throws DAOException {
         try {
             List<Operation> operations = new ArrayList<Operation>();
-            PreparedStatement ps = connection.prepareStatement("SELECT "
-                    + "id, registration, source, dest, "
-                    + "operation, status, proxy, retrycount, size, size "
-                    + "FROM Pool "
+            PreparedStatement ps = connection.prepareStatement(
+                    getOperationSelect()
                     + "WHERE username=? AND operation <> ? ORDER BY registration DESC");
 
             ps.setString(1, user);
@@ -140,17 +140,7 @@ public class PoolData implements PoolDAO {
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                operations.add(new Operation(
-                        rs.getString("id"),
-                        new Date(rs.getTimestamp("registration").getTime()),
-                        rs.getString("source"),
-                        rs.getString("dest"),
-                        rs.getString("operation"),
-                        rs.getString("status"),
-                        user,
-                        rs.getString("proxy"),
-                        rs.getInt("retrycount"),
-                        rs.getDouble("size")));
+                operations.add(getOperation(rs));
             }
             return operations;
 
@@ -164,10 +154,8 @@ public class PoolData implements PoolDAO {
     public List<Operation> getDownloadPendingOperations() throws DAOException {
         try {
             List<Operation> operations = new ArrayList<Operation>();
-            PreparedStatement ps = connection.prepareStatement("SELECT "
-                    + "id, registration, source, dest, "
-                    + "operation, status, username, proxy, retrycount, size "
-                    + "FROM Pool "
+            PreparedStatement ps = connection.prepareStatement(
+                    getOperationSelect()
                     + "WHERE (status=? OR status=?) AND "
                     + "(operation=? OR operation=?) "
                     + "ORDER BY registration");
@@ -179,17 +167,7 @@ public class PoolData implements PoolDAO {
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                operations.add(new Operation(
-                        rs.getString("id"),
-                        new Date(rs.getTimestamp("registration").getTime()),
-                        rs.getString("source"),
-                        rs.getString("dest"),
-                        rs.getString("operation"),
-                        rs.getString("status"),
-                        rs.getString("username"),
-                        rs.getString("proxy"),
-                        rs.getInt("retrycount"),
-                        rs.getDouble("size")));
+                operations.add(getOperation(rs));
             }
             return operations;
 
@@ -203,10 +181,8 @@ public class PoolData implements PoolDAO {
     public List<Operation> getUploadPendingOperations() throws DAOException {
         try {
             List<Operation> operations = new ArrayList<Operation>();
-            PreparedStatement ps = connection.prepareStatement("SELECT "
-                    + "id, registration, source, dest, "
-                    + "operation, status, username, proxy, retrycount, size "
-                    + "FROM Pool "
+            PreparedStatement ps = connection.prepareStatement(
+                    getOperationSelect()
                     + "WHERE (status = ? OR status = ?) AND "
                     + "operation = ? "
                     + "ORDER BY registration");
@@ -217,17 +193,7 @@ public class PoolData implements PoolDAO {
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                operations.add(new Operation(
-                        rs.getString("id"),
-                        new Date(rs.getTimestamp("registration").getTime()),
-                        rs.getString("source"),
-                        rs.getString("dest"),
-                        rs.getString("operation"),
-                        rs.getString("status"),
-                        rs.getString("username"),
-                        rs.getString("proxy"),
-                        rs.getInt("retrycount"),
-                        rs.getDouble("size")));
+                operations.add(getOperation(rs));
             }
             return operations;
 
@@ -241,10 +207,8 @@ public class PoolData implements PoolDAO {
     public List<Operation> getDeletePendingOperations() throws DAOException {
         try {
             List<Operation> operations = new ArrayList<Operation>();
-            PreparedStatement ps = connection.prepareStatement("SELECT "
-                    + "id, registration, source, dest, "
-                    + "operation, status, username, proxy, retrycount, size "
-                    + "FROM Pool "
+            PreparedStatement ps = connection.prepareStatement(
+                    getOperationSelect()
                     + "WHERE (status = ? OR status = ?) AND "
                     + "operation = ? "
                     + "ORDER BY registration");
@@ -255,17 +219,7 @@ public class PoolData implements PoolDAO {
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                operations.add(new Operation(
-                        rs.getString("id"),
-                        new Date(rs.getTimestamp("registration").getTime()),
-                        rs.getString("source"),
-                        rs.getString("dest"),
-                        rs.getString("operation"),
-                        rs.getString("status"),
-                        rs.getString("username"),
-                        rs.getString("proxy"),
-                        rs.getInt("retrycount"),
-                        rs.getDouble("size")));
+                operations.add(getOperation(rs));
             }
             return operations;
 
@@ -279,10 +233,8 @@ public class PoolData implements PoolDAO {
     public List<Operation> getReplicationPendingOperations() throws DAOException {
         try {
             List<Operation> operations = new ArrayList<Operation>();
-            PreparedStatement ps = connection.prepareStatement("SELECT "
-                    + "id, registration, source, dest, "
-                    + "operation, status, username, proxy, retrycount, size "
-                    + "FROM Pool "
+            PreparedStatement ps = connection.prepareStatement(
+                    getOperationSelect()
                     + "WHERE (status = ? OR status = ?) AND "
                     + "operation = ? "
                     + "ORDER BY registration");
@@ -293,17 +245,7 @@ public class PoolData implements PoolDAO {
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                operations.add(new Operation(
-                        rs.getString("id"),
-                        new Date(rs.getTimestamp("registration").getTime()),
-                        rs.getString("source"),
-                        rs.getString("dest"),
-                        rs.getString("operation"),
-                        rs.getString("status"),
-                        rs.getString("username"),
-                        rs.getString("proxy"),
-                        rs.getInt("retrycount"),
-                        rs.getDouble("size")));
+                operations.add(getOperation(rs));
             }
             return operations;
 
@@ -317,26 +259,14 @@ public class PoolData implements PoolDAO {
     public Operation getOperationById(String id) throws DAOException {
         try {
 
-            PreparedStatement ps = connection.prepareStatement("SELECT "
-                    + "id, registration, source, dest, "
-                    + "operation, status, username, proxy, retrycount, size "
-                    + "FROM Pool WHERE id=?");
+            PreparedStatement ps = connection.prepareStatement(
+                    getOperationSelect() + " WHERE id=?");
 
             ps.setString(1, id);
 
             ResultSet rs = ps.executeQuery();
             rs.next();
-            return new Operation(
-                    rs.getString("id"),
-                    new Date(rs.getTimestamp("registration").getTime()),
-                    rs.getString("source"),
-                    rs.getString("dest"),
-                    rs.getString("operation"),
-                    rs.getString("status"),
-                    rs.getString("username"),
-                    rs.getString("proxy"),
-                    rs.getInt("retrycount"),
-                    rs.getDouble("size"));
+            return getOperation(rs);
 
         } catch (SQLException ex) {
             logger.error(ex);
@@ -348,24 +278,12 @@ public class PoolData implements PoolDAO {
     public List<Operation> getAllOperations() throws DAOException {
         try {
             List<Operation> operations = new ArrayList<Operation>();
-            PreparedStatement ps = connection.prepareStatement("SELECT "
-                    + "id, registration, source, dest, username, "
-                    + "operation, status, proxy, retrycount, size "
-                    + "FROM Pool ORDER BY registration DESC");
+            PreparedStatement ps = connection.prepareStatement(
+                    getOperationSelect() + " ORDER BY registration DESC");
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                operations.add(new Operation(
-                        rs.getString("id"),
-                        new Date(rs.getTimestamp("registration").getTime()),
-                        rs.getString("source"),
-                        rs.getString("dest"),
-                        rs.getString("operation"),
-                        rs.getString("status"),
-                        rs.getString("username"),
-                        rs.getString("proxy"),
-                        rs.getInt("retrycount"),
-                        rs.getDouble("size")));
+                operations.add(getOperation(rs));
             }
             return operations;
 
@@ -441,13 +359,11 @@ public class PoolData implements PoolDAO {
     }
 
     @Override
-    public List<Operation> getOperationsByLimitDateUser(String user, int limit, Date startDate) throws DAOException {       
+    public List<Operation> getOperationsByLimitDateUser(String user, int limit, Date startDate) throws DAOException {
         try {
             List<Operation> operations = new ArrayList<Operation>();
-            PreparedStatement ps = connection.prepareStatement("SELECT "
-                    + "id, registration, source, dest, "
-                    + "operation, status, proxy, retrycount, size "
-                    + "FROM Pool "
+            PreparedStatement ps = connection.prepareStatement(
+                    getOperationSelect()
                     + "WHERE username = ? AND registration < ? AND operation <> ? "
                     + "ORDER BY registration DESC "
                     + "LIMIT 0," + limit);
@@ -455,21 +371,10 @@ public class PoolData implements PoolDAO {
             ps.setString(1, user);
             ps.setTimestamp(2, new Timestamp(startDate.getTime()));
             ps.setString(3, Operation.Type.Replicate.name()); //TODO temporary hack for the VIP portal
-            
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                operations.add(new Operation(
-                        rs.getString("id"),
-                        new Date(rs.getTimestamp("registration").getTime()),
-                        rs.getString("source"),
-                        rs.getString("dest"),
-                        rs.getString("operation"),
-                        rs.getString("status"),
-                        user,
-                        rs.getString("proxy"),
-                        rs.getInt("retrycount"),
-                        rs.getDouble("size")));
+                operations.add(getOperation(rs));
             }
             return operations;
 
@@ -487,10 +392,37 @@ public class PoolData implements PoolDAO {
             ps.setString(1, Operation.Status.Queued.name());
             ps.setString(2, Operation.Status.Running.name());
             ps.executeUpdate();
-            
+
         } catch (SQLException ex) {
             logger.error(ex);
             throw new DAOException(ex);
         }
+    }
+
+    private String getOperationSelect() {
+
+        return "SELECT id, registration, source, dest, operation, status, "
+                + "username, proxy, retrycount, size FROM Pool ";
+    }
+
+    /**
+     *
+     * @param rs
+     * @return
+     * @throws SQLException
+     */
+    private Operation getOperation(ResultSet rs) throws SQLException {
+
+        return new Operation(
+                rs.getString("id"),
+                new Date(rs.getTimestamp("registration").getTime()),
+                rs.getString("source"),
+                rs.getString("dest"),
+                Type.valueOf(rs.getString("operation")),
+                Status.valueOf(rs.getString("status")),
+                rs.getString("username"),
+                rs.getString("proxy"),
+                rs.getInt("retrycount"),
+                rs.getDouble("size"));
     }
 }

@@ -38,6 +38,8 @@ import fr.insalyon.creatis.grida.common.Communication;
 import fr.insalyon.creatis.grida.common.Constants;
 import fr.insalyon.creatis.grida.common.ExecutorConstants;
 import fr.insalyon.creatis.grida.common.bean.Operation;
+import fr.insalyon.creatis.grida.common.bean.Operation.Status;
+import fr.insalyon.creatis.grida.common.bean.Operation.Type;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -128,12 +130,12 @@ public class GRIDAPoolClient extends AbstractGRIDAClient {
 
     /**
      * Downloads an array of remote files to a zip file.
-     * 
+     *
      * @param remoteFiles Remote files path array.
      * @param packName Path and name of the zip file (e.g.: /tmp/zipfile)
      * @param user User name
      * @return ID of the operation
-     * @throws GRIDAClientException 
+     * @throws GRIDAClientException
      */
     public String downloadFiles(String[] remoteFiles, String packName, String user) throws GRIDAClientException {
 
@@ -161,12 +163,13 @@ public class GRIDAPoolClient extends AbstractGRIDAClient {
 
     /**
      * Downloads a remote folder to a specific directory.
-     * 
+     *
      * @param remoteFolder Remote folder path
-     * @param localDir Local directory path where the folder should be downloaded
+     * @param localDir Local directory path where the folder should be
+     * downloaded
      * @param user User name
      * @return ID of the operation
-     * @throws GRIDAClientException 
+     * @throws GRIDAClientException
      */
     public String downloadFolder(String remoteFolder, String localDir, String user) throws GRIDAClientException {
 
@@ -192,12 +195,13 @@ public class GRIDAPoolClient extends AbstractGRIDAClient {
     }
 
     /**
-     * Replicates a remote file to a list of preferred SEs declared in the agent.
-     * 
+     * Replicates a remote file to a list of preferred SEs declared in the
+     * agent.
+     *
      * @param remoteFile Remote file path
      * @param user User name
      * @return ID of the operation
-     * @throws GRIDAClientException 
+     * @throws GRIDAClientException
      */
     public String replicateToPreferredSEs(String remoteFile, String user) throws GRIDAClientException {
 
@@ -286,12 +290,12 @@ public class GRIDAPoolClient extends AbstractGRIDAClient {
 
     /**
      * Gets a limited list of operations by user and date.
-     * 
+     *
      * @param user User name to be filtered
      * @param limit Maximum size of the list
      * @param startDate Offset date
      * @return List of operations associated to the user
-     * @throws GRIDAClientException 
+     * @throws GRIDAClientException
      */
     public List<Operation> getOperationsLimitedListByUserAndDate(String user,
             int limit, Date startDate) throws GRIDAClientException {
@@ -430,11 +434,12 @@ public class GRIDAPoolClient extends AbstractGRIDAClient {
     }
 
     private Operation parseOperation(String data) {
-        
+
         String[] operation = data.split(Constants.MSG_SEP_2);
         return new Operation(
                 operation[0], new Date(new Long(operation[1])), operation[2],
-                operation[3], operation[4], operation[5], operation[6], 
+                operation[3], Type.valueOf(operation[4]),
+                Status.valueOf(operation[5]), operation[6],
                 new Double(operation[7]), new Integer(operation[8]));
     }
 }
