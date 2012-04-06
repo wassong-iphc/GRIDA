@@ -152,6 +152,10 @@ public class Operation {
         return registration;
     }
 
+    public void setRegistration(Date registration) {
+        this.registration = registration;
+    }
+
     public String getSource() {
         return source;
     }

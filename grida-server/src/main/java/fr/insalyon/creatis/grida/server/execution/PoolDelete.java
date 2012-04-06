@@ -42,6 +42,7 @@ import fr.insalyon.creatis.grida.server.business.OperationBusiness;
 import fr.insalyon.creatis.grida.server.dao.DAOException;
 import fr.insalyon.creatis.grida.server.dao.DAOFactory;
 import fr.insalyon.creatis.grida.server.dao.PoolDAO;
+import java.util.Date;
 import java.util.List;
 import org.apache.log4j.Logger;
 
@@ -138,6 +139,7 @@ public class PoolDelete extends Thread {
                     poolDAO.removeOperationById(operation.getId());
                 } else {
                     operation.incrementRetryCount();
+                    operation.setRegistration(new Date());
                     updateStatus(operation, Status.Rescheduled);
                 }
             } catch (DAOException ex) {

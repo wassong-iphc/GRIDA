@@ -48,7 +48,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
@@ -156,23 +155,22 @@ public class LCGOperations {
                     data.add(new GridData(dataName.toString(), type, line[0]));
                 } else {
                     String modifTime = "unknown";
-                    if(line.length < 6)
-                          logger.warn("Cannot get modification time; setting it to \"unknown\".");
-                        else
-                          modifTime = line[5] + " " + line[6] + " " + line[7];
+                    if (line.length < 6) {
+                        logger.warn("Cannot get modification time; setting it to \"unknown\".");
+                    } else {
+                        modifTime = line[5] + " " + line[6] + " " + line[7];
+                    }
                     Long l = null;
-                    try{
+                    try {
                         l = new Long(line[4]);
-                    }
-                    catch(java.lang.NumberFormatException e){
-                        logger.warn("Cannot parse long: \""+line[4]+"\". Setting file length to 0");
+                    } catch (java.lang.NumberFormatException e) {
+                        logger.warn("Cannot parse long: \"" + line[4] + "\". Setting file length to 0");
                         l = new Long(0);
-                    }
-                    catch(java.lang.ArrayIndexOutOfBoundsException e){
+                    } catch (java.lang.ArrayIndexOutOfBoundsException e) {
                         logger.warn("Cannot get long. Setting file length to 0");
                         l = new Long(0);
                     }
-                    
+
                     data.add(new GridData(dataName.toString(), type,
                             l, modifTime, "-", line[0]));
                 }
@@ -209,6 +207,7 @@ public class LCGOperations {
      */
     public static String downloadFile(String proxy, String localDirPath,
             String fileName, String remoteFilePath) throws OperationException {
+
         try {
             String lfn = "lfn:" + remoteFilePath;
             String localPath = "file:" + localDirPath + "/" + fileName;
@@ -417,13 +416,13 @@ public class LCGOperations {
             logger.info("[LCG] Deleting folder '" + lfn + "'.");
 
             for (GridData data : listFilesAndFolders(proxy, path)) {
-                if (data.getType() == GridData.Type.Folder) {
-                    deleteFolder(proxy, path + "/" + data.getName());
-                } else {
-                    try {
+                try {
+                    if (data.getType() == GridData.Type.Folder) {
+                        deleteFolder(proxy, path + "/" + data.getName());
+                    } else {
                         deleteFile(proxy, path + "/" + data.getName());
-                    } catch (OperationException ex) {
                     }
+                } catch (OperationException ex) {
                 }
             }
 
@@ -472,7 +471,8 @@ public class LCGOperations {
             String lfn = "lfn:" + path;
 
             logger.info("Deleting '" + lfn + "'");
-            Process process = OperationsUtil.getProcess(proxy, "lcg-del", "-v", "-a", lfn);
+            Process process = OperationsUtil.getProcess(proxy, "lcg-del", "-v", 
+                    "-a", "--sendreceive-timeout", "30", lfn);
 
             BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String s = null;
@@ -685,7 +685,7 @@ public class LCGOperations {
     private static String getGUID(String proxy, String path) throws OperationException {
 
         try {
-            logger.info("[LCG] getting GUID of: " + path);
+            logger.info("[LCG] Getting GUID of: " + path);
             Process process = OperationsUtil.getProcess(proxy, "lcg-lg", "lfn:" + path);
 
             BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -728,7 +728,7 @@ public class LCGOperations {
     private static String[] getSURL(String proxy, String path) throws OperationException {
 
         try {
-            logger.info("[LCG] getting SURL of: " + path);
+            logger.info("[LCG] Getting SURL of: " + path);
             Process process = OperationsUtil.getProcess(proxy, "lcg-lr", "lfn:" + path);
 
             BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));

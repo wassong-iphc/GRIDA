@@ -52,112 +52,123 @@ public class LCGFailoverOperations {
     private static Logger logger = Logger.getLogger(LCGFailoverOperations.class);
 
     /**
-     * 
+     *
      * @param proxy
      * @param localDirPath
      * @param fileName
      * @param remoteFilePath
      * @return
-     * @throws Exception 
+     * @throws Exception
      */
     public static String downloadFile(String proxy, String localDirPath,
             String fileName, String remoteFilePath) throws Exception {
 
-        checkConfiguration();
-        String lfn = "lfn:" + remoteFilePath;
-        String localPath = "file:" + localDirPath + "/" + fileName;
+        if (hasFailoverServer()) {
+            String lfn = "lfn:" + remoteFilePath;
+            String localPath = "file:" + localDirPath + "/" + fileName;
 
-        List<String> paths = getReplicas(proxy, lfn);
+            List<String> paths = getReplicas(proxy, lfn);
 
-        logger.info("Downloading File from Failover Servers: " + lfn + " - To: " + localPath);
-        boolean downloaded = false;
+            logger.info("Downloading File from Failover Servers: " + lfn + " - To: " + localPath);
+            boolean downloaded = false;
 
-        for (String path : paths) {
-            Process process = OperationsUtil.getProcess(proxy, "lcg-cp", "-v", "--nobdii",
-                    "--connect-timeout", "10", "--sendreceive-timeout", "900",
-                    "--bdii-timeout", "10", "--srm-timeout", "30",
-                    "--vo", Configuration.getInstance().getVo(),
-                    "--defaultsetype", "srmv2", "-v", path,
-                    localPath);
+            for (String path : paths) {
+                Process process = OperationsUtil.getProcess(proxy, "lcg-cp", "-v", "--nobdii",
+                        "--connect-timeout", "10", "--sendreceive-timeout", "900",
+                        "--bdii-timeout", "10", "--srm-timeout", "30",
+                        "--vo", Configuration.getInstance().getVo(),
+                        "--defaultsetype", "srmv2", "-v", path,
+                        localPath);
 
-            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String s = null;
-            String cout = "";
+                BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String s = null;
+                String cout = "";
 
-            while ((s = r.readLine()) != null) {
-                cout += s + "\n";
+                while ((s = r.readLine()) != null) {
+                    cout += s + "\n";
+                }
+                process.waitFor();
+                OperationsUtil.close(process);
+                r.close();
+
+                if (process.exitValue() != 0) {
+                    logger.error(cout);
+                } else {
+                    downloaded = true;
+                    break;
+                }
+                process = null;
             }
-            process.waitFor();
-            OperationsUtil.close(process);
-            r.close();
 
-            if (process.exitValue() != 0) {
-                logger.error(cout);
-            } else {
-                downloaded = true;
-                break;
+            if (!downloaded) {
+                File file = new File(localPath);
+                if (file.exists()) {
+                    file.delete();
+                }
+                logger.error("Unable to download file from failover servers.");
+                throw new Exception("Unable to download file from failover servers.");
             }
-            process = null;
         }
-
-        if (!downloaded) {
-            File file = new File(localPath);
-            if (file.exists()) {
-                file.delete();
-            }
-            logger.error("Unable to download file from failover servers.");
-            throw new Exception("Unable to download file from failover servers.");
-        }
-
         return localDirPath + "/" + fileName;
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
      * @return
-     * @throws Exception 
+     * @throws Exception
      */
     public static void deleteFile(String proxy, String path) throws Exception {
 
-        checkConfiguration();
-        String lfn = "lfn:" + path;
+        if (hasFailoverServer()) {
 
-        List<String> paths = getReplicas(proxy, lfn);
+            String lfn = "lfn:" + path;
 
-        logger.info("Deleting File from Failover Servers: " + lfn);
+            List<String> paths = getReplicas(proxy, lfn);
 
-        for (String p : paths) {
-            Process process = OperationsUtil.getProcess(proxy, "lcg-del", "-v",
-                    "--nobdii", "--defaultsetype", "srmv2", p);
+            if (!paths.isEmpty()) {
+                logger.info("Deleting File from Failover Servers: " + lfn);
 
-            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String s = null;
-            String cout = "";
+                for (String p : paths) {
+                    Process process = OperationsUtil.getProcess(proxy, "lcg-del", "-v",
+                            "--nobdii", "--defaultsetype", "srmv2", p);
 
-            while ((s = r.readLine()) != null) {
-                cout += s + "\n";
+                    BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    String s = null;
+                    String cout = "";
+
+                    while ((s = r.readLine()) != null) {
+                        cout += s + "\n";
+                    }
+                    process.waitFor();
+                    OperationsUtil.close(process);
+                    r.close();
+
+                    if (process.exitValue() != 0) {
+                        logger.warn("Unable to delete file '" + lfn + "': " + cout);
+                    }
+                    process = null;
+                }
             }
-            process.waitFor();
-            OperationsUtil.close(process);
-            r.close();
-
-            if (process.exitValue() != 0) {
-                logger.warn("Unable to delete file '" + lfn + "': " + cout);
-            }
-            process = null;
         }
     }
 
-    private static void checkConfiguration() throws Exception {
-
-        if (Configuration.getInstance().getFailoverServers().isEmpty()) {
-            logger.warn("No Failover server available.");
-            throw new Exception("No Failover server available.");
-        }
+    /**
+     *
+     * @return @throws Exception
+     */
+    private static boolean hasFailoverServer() throws Exception {
+        return !Configuration.getInstance().getFailoverServers().isEmpty();
     }
 
+    /**
+     *
+     * @param proxy
+     * @param lfn
+     * @return
+     * @throws Exception
+     */
     private static List<String> getReplicas(String proxy, String lfn) throws Exception {
 
         Process process = OperationsUtil.getProcess(proxy, "lcg-lr", lfn);
@@ -184,11 +195,6 @@ public class LCGFailoverOperations {
             throw new Exception(cout);
         }
         process = null;
-
-        if (paths.isEmpty()) {
-            logger.warn("The file has no entries for the specified failover servers.");
-            throw new Exception("The file has no entries for the specified failover servers.");
-        }
 
         return paths;
     }

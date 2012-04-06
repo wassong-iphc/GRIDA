@@ -34,16 +34,10 @@
  */
 package fr.insalyon.creatis.grida.server.dao.h2;
 
-import condor.classad.Constant;
-import fr.insalyon.creatis.grida.common.Constants;
 import fr.insalyon.creatis.grida.common.bean.Operation;
 import fr.insalyon.creatis.grida.server.dao.DAOException;
 import fr.insalyon.creatis.grida.server.dao.PoolDAO;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -100,13 +94,14 @@ public class PoolData implements PoolDAO {
     public void updateOperation(Operation operation) throws DAOException {
         try {
             PreparedStatement ps = connection.prepareStatement("UPDATE Pool "
-                    + "SET status=?, retrycount=?, dest=? "
+                    + "SET status=?, retrycount=?, dest=?, registration = ? "
                     + "WHERE id=?");
 
             ps.setString(1, operation.getStatus().name());
             ps.setInt(2, operation.getRetrycount());
             ps.setString(3, operation.getDest());
-            ps.setString(4, operation.getId());
+            ps.setTimestamp(4, new Timestamp(operation.getRegistration().getTime()));
+            ps.setString(5, operation.getId());
             ps.executeUpdate();
 
         } catch (SQLException ex) {
