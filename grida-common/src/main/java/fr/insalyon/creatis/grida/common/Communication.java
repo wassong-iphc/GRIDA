@@ -46,13 +46,11 @@ import java.net.Socket;
  */
 public class Communication {
 
-    private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
 
     public Communication(Socket socket) throws IOException {
 
-        this.socket = socket;
         this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.out = new PrintWriter(socket.getOutputStream(), true);
     }
@@ -96,8 +94,6 @@ public class Communication {
 
     public void close() throws IOException {
         
-        in.close();
         out.close();
-        socket.close();
     }
 }

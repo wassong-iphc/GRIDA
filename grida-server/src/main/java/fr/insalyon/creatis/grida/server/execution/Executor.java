@@ -75,6 +75,12 @@ public class Executor extends Thread {
             }
         } catch (IOException ex) {
             logger.error(ex);
+        } finally {
+            try {
+                communication.close();
+            } catch (IOException ex) {
+                logger.error(ex);
+            }
         }
     }
 
@@ -152,7 +158,7 @@ public class Executor extends Thread {
                 // Zombie Operations
                 case ExecutorConstants.ZOM_GET:
                     return new ZombieGetListCommand(communication, proxy);
-                    
+
                 case ExecutorConstants.ZOM_DELETE:
                     return new DeleteZombieFileCommand(communication, proxy, tokens[2]);
 
