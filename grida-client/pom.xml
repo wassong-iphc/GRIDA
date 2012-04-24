@@ -37,11 +37,11 @@
     
     <distributionManagement>
         <repository>
-            <id>releases</id>
+            <id>creatis-releases</id>
             <url>http://vip.creatis.insa-lyon.fr:9007/nexus/content/repositories/releases</url>
         </repository>
         <snapshotRepository>
-            <id>snapshots</id>
+            <id>creatis-snapshots</id>
             <name>Internal Snapshots</name>
             <url>http://vip.creatis.insa-lyon.fr:9007/nexus/content/repositories/snapshots</url>
         </snapshotRepository>
