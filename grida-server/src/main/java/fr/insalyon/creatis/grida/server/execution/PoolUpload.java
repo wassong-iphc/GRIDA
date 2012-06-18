@@ -43,7 +43,9 @@ import fr.insalyon.creatis.grida.server.business.PoolBusiness;
 import fr.insalyon.creatis.grida.server.dao.DAOException;
 import fr.insalyon.creatis.grida.server.dao.DAOFactory;
 import fr.insalyon.creatis.grida.server.dao.PoolDAO;
+import java.io.File;
 import java.util.List;
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
 /**
@@ -144,6 +146,8 @@ public class PoolUpload extends Thread {
             try {
                 if (operation.getRetrycount() == Configuration.getInstance().getMaxRetryCount()) {
                     updateStatus(operation, Status.Failed);
+                    FileUtils.deleteQuietly(new File(operation.getSource()));
+                    
                 } else {
                     operation.incrementRetryCount();
                     updateStatus(operation, Status.Rescheduled);
