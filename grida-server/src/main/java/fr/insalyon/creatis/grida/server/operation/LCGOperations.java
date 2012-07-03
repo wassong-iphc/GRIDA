@@ -155,7 +155,7 @@ public class LCGOperations {
                     data.add(new GridData(dataName.toString(), type, line[0]));
                 } else {
                     String modifTime = "unknown";
-                    if (line.length < 6) {
+                    if (line.length < 8) {
                         logger.warn("Cannot get modification time; setting it to \"unknown\".");
                     } else {
                         modifTime = line[5] + " " + line[6] + " " + line[7];
