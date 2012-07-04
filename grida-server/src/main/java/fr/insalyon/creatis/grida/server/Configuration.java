@@ -55,25 +55,26 @@ public class Configuration {
     private static Configuration instance;
     private static final String confFile = "grida-server.conf";
     // General
-    private int port = 9006;
-    private String lfcHost = "lfc-biomed.in2p3.fr";
-    private String vo = "biomed";
-    private String bdiiHost = "cclcgtopbdii02.in2p3.fr";
-    private String bdiiPort = "2170";
+    private int port;
+    private String lfcHost;
+    private String vo;
+    private String bdiiHost;
+    private String bdiiPort;
     private List<String> preferredSEsList;
-    private int maxRetryCount = 5;
+    private int maxRetryCount;
     private List<String> failoverServers;
     private boolean isLcgCommandsAvailable = false;
     // Cache
-    private int cacheListMaxEntries = 30;
-    private int cacheListMaxHours = 12;
-    private double cacheFilesMaxSize = 100 * 1024 * 1024;
-    private String cacheFilesPath = ".cache";
+    private int cacheListMaxEntries;
+    private int cacheListMaxHours;
+    private double cacheFilesMaxSize;
+    private String cacheFilesPath;
     // Pool
-    private int maxSimultaneousDownloads = 10;
-    private int maxSimultaneousUploads = 10;
-    private int maxSimultaneousDeletes = 5;
-    private int maxSimultaneousReplications = 5;
+    private int maxHistory;
+    private int maxSimultaneousDownloads;
+    private int maxSimultaneousUploads;
+    private int maxSimultaneousDeletes;
+    private int maxSimultaneousReplications;
     // Vlet
     private VRSContext vrsContext;
     private VFSClient vfsClient;
@@ -102,39 +103,41 @@ public class Configuration {
             logger.info("Loading configuration file.");
             PropertiesConfiguration config = new PropertiesConfiguration(new File(confFile));
 
-            port = config.getInt("agent.port", port);
-            maxRetryCount = config.getInt("agent.retrycount", maxRetryCount);
-            lfcHost = config.getString("lfc.host", lfcHost);
-            vo = config.getString("vo", vo);
-            bdiiHost = config.getString("bdii.host", bdiiHost);
-            bdiiPort = config.getString("bdii.port", bdiiPort);
-            preferredSEsList = config.getList("lfc.preferredSEsList", new ArrayList<String>());
-            cacheListMaxEntries = config.getInt("cache.list.max.entries", cacheListMaxEntries);
-            cacheListMaxHours = config.getInt("cache.list.max.hours", cacheListMaxHours);
-            cacheFilesMaxSize = config.getDouble("cache.files.max.size", cacheFilesMaxSize / (1024 * 1024)) * 1024 * 1024;
-            cacheFilesPath = config.getString("cache.files.path", cacheFilesPath);
-            failoverServers = config.getList("failover.servers", new ArrayList<String>());
-            maxSimultaneousDownloads = config.getInt("pool.max.download", maxSimultaneousDownloads);
-            maxSimultaneousUploads = config.getInt("pool.max.upload", maxSimultaneousUploads);
-            maxSimultaneousDeletes = config.getInt("pool.max.delete", maxSimultaneousDeletes);
-            maxSimultaneousReplications = config.getInt("pool.max.replication", maxSimultaneousReplications);
+            port = config.getInt(Constants.LAB_AGENT_PORT, 9006);
+            maxRetryCount = config.getInt(Constants.LAB_AGENT_RETRYCOUNT, 5);
+            lfcHost = config.getString(Constants.LAB_LFC_HOST, "lfc-biomed.in2p3.fr");
+            vo = config.getString(Constants.LAB_VO, "biomed");
+            bdiiHost = config.getString(Constants.LAB_BDII_HOST, "cclcgtopbdii02.in2p3.fr");
+            bdiiPort = config.getString(Constants.LAB_BDII_PORT, "2170");
+            preferredSEsList = config.getList(Constants.LAB_LFC_PREFERRED_SES, new ArrayList<String>());
+            cacheListMaxEntries = config.getInt(Constants.LAB_CACHE_MAX_ENTRIES, 30);
+            cacheListMaxHours = config.getInt(Constants.LAB_CACHE_MAX_HOURS, 12);
+            cacheFilesMaxSize = config.getDouble(Constants.LAB_CACHE_MAX_SIZE, 100) * 1024 * 1024;
+            cacheFilesPath = config.getString(Constants.LAB_CACHE_PATH, ".cache");
+            failoverServers = config.getList(Constants.LAB_FAILOVER_SERVERS, new ArrayList<String>());
+            maxSimultaneousDownloads = config.getInt(Constants.LAB_POOL_MAX_DOWNLOAD, 10);
+            maxSimultaneousUploads = config.getInt(Constants.LAB_POOL_MAX_UPLOAD, 10);
+            maxSimultaneousDeletes = config.getInt(Constants.LAB_POOL_MAX_DELETE, 5);
+            maxSimultaneousReplications = config.getInt(Constants.LAB_POOL_MAX_REPLICATION, 5);
+            maxHistory = config.getInt(Constants.LAB_POOL_MAX_HISTORY, 120);
 
-            config.setProperty("agent.port", port);
-            config.setProperty("agent.retrycount", maxRetryCount);
-            config.setProperty("lfc.host", lfcHost);
-            config.setProperty("vo", vo);
-            config.setProperty("bdii.host", bdiiHost);
-            config.setProperty("bdii.port", bdiiPort);
-            config.setProperty("lfc.preferredSEsList", preferredSEsList);
-            config.setProperty("cache.list.max.entries", cacheListMaxEntries);
-            config.setProperty("cache.list.max.hours", cacheListMaxHours);
-            config.setProperty("cache.files.max.size", cacheFilesMaxSize / (1024 * 1024));
-            config.setProperty("cache.files.path", cacheFilesPath);
-            config.setProperty("failover.servers", failoverServers);
-            config.setProperty("pool.max.download", maxSimultaneousDownloads);
-            config.setProperty("pool.max.upload", maxSimultaneousUploads);
-            config.setProperty("pool.max.delete", maxSimultaneousDeletes);
-            config.setProperty("pool.max.replication", maxSimultaneousReplications);
+            config.setProperty(Constants.LAB_AGENT_PORT, port);
+            config.setProperty(Constants.LAB_AGENT_RETRYCOUNT, maxRetryCount);
+            config.setProperty(Constants.LAB_LFC_HOST, lfcHost);
+            config.setProperty(Constants.LAB_VO, vo);
+            config.setProperty(Constants.LAB_BDII_HOST, bdiiHost);
+            config.setProperty(Constants.LAB_BDII_PORT, bdiiPort);
+            config.setProperty(Constants.LAB_LFC_PREFERRED_SES, preferredSEsList);
+            config.setProperty(Constants.LAB_CACHE_MAX_ENTRIES, cacheListMaxEntries);
+            config.setProperty(Constants.LAB_CACHE_MAX_HOURS, cacheListMaxHours);
+            config.setProperty(Constants.LAB_CACHE_MAX_SIZE, cacheFilesMaxSize / (1024 * 1024));
+            config.setProperty(Constants.LAB_CACHE_PATH, cacheFilesPath);
+            config.setProperty(Constants.LAB_FAILOVER_SERVERS, failoverServers);
+            config.setProperty(Constants.LAB_POOL_MAX_DOWNLOAD, maxSimultaneousDownloads);
+            config.setProperty(Constants.LAB_POOL_MAX_UPLOAD, maxSimultaneousUploads);
+            config.setProperty(Constants.LAB_POOL_MAX_DELETE, maxSimultaneousDeletes);
+            config.setProperty(Constants.LAB_POOL_MAX_REPLICATION, maxSimultaneousReplications);
+            config.setProperty(Constants.LAB_POOL_MAX_HISTORY, maxHistory);
 
             config.save();
 
@@ -149,7 +152,7 @@ public class Configuration {
         if (!cacheDir.exists()) {
             if (!cacheDir.mkdirs()) {
                 logger.error("Unable to create cache folder at: " + cacheDir.getAbsolutePath());
-                logger.error("Stopping Vlet Agent.");
+                logger.error("Stopping GRIDA Server.");
                 System.exit(1);
             }
         }
@@ -212,7 +215,7 @@ public class Configuration {
         // Configuring vlet
         GlobalConfig.setSystemProperty("bdii.hostname", bdiiHost);
         GlobalConfig.setSystemProperty("bdii.port", bdiiPort);
-        if (!preferredSEsList.equals("")) {
+        if (!preferredSEsList.isEmpty()) {
             setPreferredSEs();
             GlobalConfig.setSystemProperty("lfc.replicaCreationMode", "PreferredRandom");
             GlobalConfig.setSystemProperty("lfc.replicaSelectionMode", "AllRandom");
@@ -243,7 +246,7 @@ public class Configuration {
     }
 
     public void setPreferredSEs() {
-        
+
         StringBuilder sb = new StringBuilder();
         for (String se : preferredSEsList) {
             if (sb.length() > 0) {
@@ -304,5 +307,9 @@ public class Configuration {
 
     public int getMaxSimultaneousReplications() {
         return maxSimultaneousReplications;
+    }
+
+    public int getMaxHistory() {
+        return maxHistory;
     }
 }

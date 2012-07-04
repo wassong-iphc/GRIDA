@@ -71,11 +71,11 @@ public class VletOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
      * @return
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static long getModificationDate(String proxy, String path) throws OperationException {
 
@@ -93,19 +93,19 @@ public class VletOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
      * @return
-     * @throws OperationException 
-     * 
+     * @throws OperationException
+     *
      * Attributes:
-     * 
-     * type, name, scheme, hostname, port, mimeType, isReadable, isWritable, 
-     * isHidden, isFile, isDir, nrChilds, length, modificationTime, 
-     * parentDirname, isSymbolicLink, permissionsString, symbolicLinkTarget, 
-     * groupID, userID, gridUniqueID, unixFileMode, creationTime, accessTime, 
-     * lfcFileId, lfcFileClass, lfcULink, lfcStatus, lfcComment, nrOfReplicas, 
+     *
+     * type, name, scheme, hostname, port, mimeType, isReadable, isWritable,
+     * isHidden, isFile, isDir, nrChilds, length, modificationTime,
+     * parentDirname, isSymbolicLink, permissionsString, symbolicLinkTarget,
+     * groupID, userID, gridUniqueID, unixFileMode, creationTime, accessTime,
+     * lfcFileId, lfcFileClass, lfcULink, lfcStatus, lfcComment, nrOfReplicas,
      * replicaSEHosts, iconURL, path, location
      */
     public static List<GridData> listFilesAndFolders(String proxy, String path)
@@ -140,13 +140,13 @@ public class VletOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param localDir
      * @param fileName
      * @param remoteFilePath
      * @return
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static String downloadFile(String proxy, File localDir, String fileName,
             String remoteFilePath) throws OperationException {
@@ -167,12 +167,12 @@ public class VletOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param localFilePath
      * @param remoteDir
      * @return
-     * @throws Exception 
+     * @throws Exception
      */
     public static String uploadFile(String proxy, String localFilePath,
             String remoteDir) throws OperationException {
@@ -198,10 +198,10 @@ public class VletOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param sourcePath
-     * @throws Exception 
+     * @throws Exception
      */
     public static void replicateFile(String proxy, String sourcePath)
             throws OperationException {
@@ -221,11 +221,11 @@ public class VletOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
      * @return
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static boolean isDir(String proxy, String path) throws OperationException {
 
@@ -243,10 +243,10 @@ public class VletOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static void deleteFolder(String proxy, String path) throws OperationException {
 
@@ -266,10 +266,10 @@ public class VletOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static void deleteFile(String proxy, String path) throws OperationException {
 
@@ -289,10 +289,10 @@ public class VletOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static void createFolder(String proxy, String path) throws OperationException {
 
@@ -316,11 +316,11 @@ public class VletOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param oldPath
      * @param newPath
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static void rename(String proxy, String oldPath, String newPath) throws OperationException {
 
@@ -342,14 +342,14 @@ public class VletOperations {
     }
 
     /**
-     * 
+     *
      * @param logger
      * @param vrlRemote
      * @param vrlDest
      * @param remoteDir
      * @param destDir
      * @return
-     * @throws Exception 
+     * @throws Exception
      */
     public static String downloadFolder(String proxy, VRL vrlRemote, VRL vrlDest,
             VDir remoteDir, VDir destDir) throws Exception {
@@ -362,11 +362,11 @@ public class VletOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
      * @return
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static boolean exist(String proxy, String path) throws OperationException {
 
@@ -376,7 +376,7 @@ public class VletOperations {
             vfsClient.getVFSNode(vrl);
 
         } catch (VlException ex) {
-            if (ex.getMessage().equals("Error while performing:LINKSTAT")) {
+            if (ex.getMessage().contains("Error while performing:LINKSTAT")) {
                 return false;
             }
             throw new OperationException(ex);
@@ -385,11 +385,11 @@ public class VletOperations {
     }
 
     /**
-     * 
+     *
      * @param proxy
      * @param path
      * @return
-     * @throws OperationException 
+     * @throws OperationException
      */
     public static long getFileSize(String proxy, String path) throws OperationException {
 

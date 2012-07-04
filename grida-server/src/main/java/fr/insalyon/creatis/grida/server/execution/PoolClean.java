@@ -32,57 +32,74 @@
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL license and that you accept its terms.
  */
-package fr.insalyon.creatis.grida.server;
+package fr.insalyon.creatis.grida.server.execution;
 
-import fr.insalyon.creatis.grida.common.Communication;
+import fr.insalyon.creatis.grida.common.bean.Operation;
+import fr.insalyon.creatis.grida.server.Configuration;
+import fr.insalyon.creatis.grida.server.business.BusinessException;
+import fr.insalyon.creatis.grida.server.business.PoolBusiness;
 import fr.insalyon.creatis.grida.server.dao.DAOException;
 import fr.insalyon.creatis.grida.server.dao.DAOFactory;
-import fr.insalyon.creatis.grida.server.execution.*;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
+import fr.insalyon.creatis.grida.server.dao.PoolDAO;
+import java.util.Calendar;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 
 /**
- * 
+ *
  * @author Rafael Silva
  */
-public class Server {
+public class PoolClean extends Thread {
 
-    private static final Logger logger = Logger.getLogger(Server.class);
+    private static final Logger logger = Logger.getLogger(PoolClean.class);
+    private static PoolClean instance;
+    private volatile boolean stop;
+    private PoolDAO poolDAO;
 
-    public static void main(String[] args) {
-
-        try {
-            PropertyConfigurator.configure(Server.class.getClassLoader().getResource("gridaLog4j.properties"));
-
-            Configuration.getInstance();
-            logger.info("Starting GRIDA Server on port " + Configuration.getInstance().getPort());
-            
-            // Pools
-            DAOFactory.getDAOFactory().getPoolDAO().resetOperations();
-            PoolClean.getInstance();
-            PoolDownload.getInstance();
-            PoolUpload.getInstance();
-            PoolDelete.getInstance();
-            PoolReplicate.getInstance();
-
-            // Socket
-            ServerSocket serverSocket = new ServerSocket(
-                    Configuration.getInstance().getPort(), 50, InetAddress.getLocalHost());
-
-            while (true) {
-                Socket socket = serverSocket.accept();
-                Communication communication = new Communication(socket);
-                new Executor(communication).start();
-            }
-
-        } catch (DAOException ex) {
-            logger.error(ex);
-        } catch (IOException ex) {
-            logger.error(ex);
+    public synchronized static PoolClean getInstance() {
+    
+        if (instance == null) {
+            instance = new PoolClean();
+            instance.start();
         }
+        return instance;
+    }
+
+    private PoolClean() {
+
+        stop = false;
+        poolDAO = DAOFactory.getDAOFactory().getPoolDAO();
+    }
+
+    @Override
+    public void run() {
+
+
+        while (!stop) {
+            try {
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.DATE, -(Configuration.getInstance().getMaxHistory()));
+
+                PoolBusiness pollBusiness = new PoolBusiness();
+
+                for (Operation operation : poolDAO.getOldOperations(cal.getTime())) {
+                    try {
+                        pollBusiness.removeOperationById(operation.getId());
+                    } catch (BusinessException ex) {
+                        logger.error(ex);
+                    }
+                }
+                sleep(86400000);
+
+            } catch (DAOException ex) {
+                // do nothing
+            } catch (InterruptedException ex) {
+                logger.error(ex);
+            }
+        }
+    }
+
+    public synchronized void terminate() {
+
+        stop = true;
     }
 }

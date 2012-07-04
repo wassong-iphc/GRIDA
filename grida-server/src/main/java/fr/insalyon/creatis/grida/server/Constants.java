@@ -32,49 +32,30 @@
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL license and that you accept its terms.
  */
-package fr.insalyon.creatis.grida.server.dao;
-
-import fr.insalyon.creatis.grida.common.bean.Operation;
-import java.util.Date;
-import java.util.List;
+package fr.insalyon.creatis.grida.server;
 
 /**
  *
  * @author Rafael Silva
  */
-public interface PoolDAO {
+public class Constants {
 
-    public void addOperation(Operation operation) throws DAOException;
-
-    public void updateOperation(Operation operation) throws DAOException;
-
-    public void removeOperationById(String id) throws DAOException;
-
-    public List<Operation> getOperationsByUser(String user) throws DAOException;
-
-    public List<Operation> getDownloadPendingOperations() throws DAOException;
-
-    public List<Operation> getUploadPendingOperations() throws DAOException;
-    
-    public List<Operation> getDeletePendingOperations() throws DAOException;
-    
-    public List<Operation> getReplicationPendingOperations() throws DAOException;
-
-    public List<Operation> getAllOperations() throws DAOException;
-
-    public Operation getOperationById(String id) throws DAOException;
-
-    public void removeDeleteOperations() throws DAOException;
-
-    public void removeOperationBySourceAndType(String source, Operation.Type type) throws DAOException;
-
-    public void removeOperationByDestAndType(String dest, Operation.Type type) throws DAOException;
-
-    public void removeOperationsByUser(String user) throws DAOException;
-    
-    public List<Operation> getOperationsByLimitDateUser(String user, int limit, Date startDate) throws DAOException;
-    
-    public void resetOperations() throws DAOException;
-    
-    public List<Operation> getOldOperations(Date date) throws DAOException;
+    // Configuration Labels
+    public static final String LAB_AGENT_PORT = "agent.port";
+    public static final String LAB_AGENT_RETRYCOUNT = "agent.retrycount";
+    public static final String LAB_BDII_HOST = "bdii.host";
+    public static final String LAB_BDII_PORT = "bdii.port";
+    public static final String LAB_CACHE_MAX_ENTRIES = "cache.list.max.entries";
+    public static final String LAB_CACHE_MAX_HOURS = "cache.list.max.hours";
+    public static final String LAB_CACHE_MAX_SIZE = "cache.files.max.size";
+    public static final String LAB_CACHE_PATH = "cache.files.path";
+    public static final String LAB_FAILOVER_SERVERS = "failover.servers";
+    public static final String LAB_LFC_HOST = "lfc.host";
+    public static final String LAB_LFC_PREFERRED_SES = "lfc.preferredSEsList";
+    public static final String LAB_POOL_MAX_DELETE = "pool.max.delete";
+    public static final String LAB_POOL_MAX_DOWNLOAD = "pool.max.download";
+    public static final String LAB_POOL_MAX_HISTORY = "pool.max.history";
+    public static final String LAB_POOL_MAX_REPLICATION = "pool.max.replication";
+    public static final String LAB_POOL_MAX_UPLOAD = "pool.max.upload";
+    public static final String LAB_VO = "vo";
 }

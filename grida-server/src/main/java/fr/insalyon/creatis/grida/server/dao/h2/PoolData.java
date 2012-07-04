@@ -85,6 +85,7 @@ public class PoolData implements PoolDAO {
             ps.setInt(9, operation.getRetrycount());
             ps.setDouble(10, operation.getSize());
             ps.execute();
+            ps.close();
 
         } catch (SQLException ex) {
             logger.error(ex);
@@ -105,6 +106,7 @@ public class PoolData implements PoolDAO {
             ps.setTimestamp(4, new Timestamp(operation.getRegistration().getTime()));
             ps.setString(5, operation.getId());
             ps.executeUpdate();
+            ps.close();
 
         } catch (SQLException ex) {
             logger.error(ex);
@@ -120,6 +122,7 @@ public class PoolData implements PoolDAO {
 
             ps.setString(1, id);
             ps.execute();
+            ps.close();
 
         } catch (SQLException ex) {
             logger.error(ex);
@@ -142,6 +145,7 @@ public class PoolData implements PoolDAO {
             while (rs.next()) {
                 operations.add(getOperation(rs));
             }
+            ps.close();
             return operations;
 
         } catch (SQLException ex) {
@@ -169,6 +173,7 @@ public class PoolData implements PoolDAO {
             while (rs.next()) {
                 operations.add(getOperation(rs));
             }
+            ps.close();
             return operations;
 
         } catch (SQLException ex) {
@@ -195,6 +200,7 @@ public class PoolData implements PoolDAO {
             while (rs.next()) {
                 operations.add(getOperation(rs));
             }
+            ps.close();
             return operations;
 
         } catch (SQLException ex) {
@@ -221,6 +227,7 @@ public class PoolData implements PoolDAO {
             while (rs.next()) {
                 operations.add(getOperation(rs));
             }
+            ps.close();
             return operations;
 
         } catch (SQLException ex) {
@@ -247,6 +254,7 @@ public class PoolData implements PoolDAO {
             while (rs.next()) {
                 operations.add(getOperation(rs));
             }
+            ps.close();
             return operations;
 
         } catch (SQLException ex) {
@@ -266,7 +274,9 @@ public class PoolData implements PoolDAO {
 
             ResultSet rs = ps.executeQuery();
             rs.next();
-            return getOperation(rs);
+            Operation operation = getOperation(rs);
+            ps.close();
+            return operation;
 
         } catch (SQLException ex) {
             logger.error(ex);
@@ -285,6 +295,7 @@ public class PoolData implements PoolDAO {
             while (rs.next()) {
                 operations.add(getOperation(rs));
             }
+            ps.close();
             return operations;
 
         } catch (SQLException ex) {
@@ -303,6 +314,7 @@ public class PoolData implements PoolDAO {
             ps.setString(2, Operation.Status.Failed.name());
             ps.setString(3, Operation.Type.Delete.name());
             ps.execute();
+            ps.close();
 
         } catch (SQLException ex) {
             logger.error(ex);
@@ -319,6 +331,7 @@ public class PoolData implements PoolDAO {
             ps.setString(1, source);
             ps.setString(2, type.name());
             ps.execute();
+            ps.close();
 
         } catch (SQLException ex) {
             logger.error(ex);
@@ -335,6 +348,7 @@ public class PoolData implements PoolDAO {
             ps.setString(1, dest);
             ps.setString(2, type.name());
             ps.execute();
+            ps.close();
 
         } catch (SQLException ex) {
             logger.error(ex);
@@ -351,6 +365,7 @@ public class PoolData implements PoolDAO {
             ps.setString(1, user);
             ps.setString(2, Operation.Status.Running.name());
             ps.execute();
+            ps.close();
 
         } catch (SQLException ex) {
             logger.error(ex);
@@ -376,6 +391,7 @@ public class PoolData implements PoolDAO {
             while (rs.next()) {
                 operations.add(getOperation(rs));
             }
+            ps.close();
             return operations;
 
         } catch (SQLException ex) {
@@ -392,6 +408,7 @@ public class PoolData implements PoolDAO {
             ps.setString(1, Operation.Status.Queued.name());
             ps.setString(2, Operation.Status.Running.name());
             ps.executeUpdate();
+            ps.close();
 
         } catch (SQLException ex) {
             logger.error(ex);
@@ -424,5 +441,28 @@ public class PoolData implements PoolDAO {
                 rs.getString("proxy"),
                 rs.getInt("retrycount"),
                 rs.getDouble("size"));
+    }
+
+    @Override
+    public List<Operation> getOldOperations(Date date) throws DAOException {
+        
+        try {
+            List<Operation> operations = new ArrayList<Operation>();
+            PreparedStatement ps = connection.prepareStatement(
+                    getOperationSelect()
+                    + "WHERE registration < ? ORDER BY registration DESC");
+
+            ps.setTimestamp(1, new Timestamp(date.getTime()));
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                operations.add(getOperation(rs));
+            }
+            ps.close();
+            return operations;
+
+        } catch (SQLException ex) {
+            logger.error(ex);
+            throw new DAOException(ex);
+        }
     }
 }
