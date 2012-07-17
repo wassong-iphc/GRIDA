@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -34,11 +34,11 @@
  */
 package fr.insalyon.creatis.grida.server.execution.command;
 
-import fr.insalyon.creatis.grida.server.execution.Command;
 import fr.insalyon.creatis.grida.common.Communication;
 import fr.insalyon.creatis.grida.server.business.BusinessException;
 import fr.insalyon.creatis.grida.server.business.CacheBusiness;
 import fr.insalyon.creatis.grida.server.business.OperationBusiness;
+import fr.insalyon.creatis.grida.server.execution.Command;
 import java.io.File;
 import java.io.IOException;
 import org.apache.commons.io.FileUtils;
@@ -47,7 +47,7 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class GetRemoteFileCommand extends Command {
 
@@ -62,7 +62,7 @@ public class GetRemoteFileCommand extends Command {
         super(communication, proxyFileName);
         this.remoteFilePath = remoteFilePath;
         this.localDirPath = localDirPath;
-        
+
         operationBusiness = new OperationBusiness(proxyFileName);
     }
 
@@ -107,15 +107,15 @@ public class GetRemoteFileCommand extends Command {
 
     /**
      * Downloads a file from the grid.
-     * 
+     *
      * @param fileName
      * @return
      * @throws Exception
      */
     private String downloadFile(String fileName) throws BusinessException {
 
-        String destPath = operationBusiness.downloadFile(localDirPath, fileName, 
-                remoteFilePath);
+        String destPath = operationBusiness.downloadFile(null, localDirPath,
+                fileName, remoteFilePath);
         communication.sendMessage(destPath);
         return destPath;
     }

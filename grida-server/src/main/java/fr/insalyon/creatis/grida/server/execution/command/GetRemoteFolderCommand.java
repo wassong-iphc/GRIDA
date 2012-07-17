@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -41,7 +41,7 @@ import fr.insalyon.creatis.grida.server.execution.Command;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class GetRemoteFolderCommand extends Command {
 
@@ -64,7 +64,7 @@ public class GetRemoteFolderCommand extends Command {
 
         try {
             String destPath = operationBusiness.downloadFolder(
-                    localDirPath, remoteDirPath, true);
+                    null, localDirPath, remoteDirPath, true);
             communication.sendMessage(destPath);
 
         } catch (BusinessException ex) {

@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -44,7 +44,7 @@ import fr.insalyon.creatis.grida.server.execution.Command;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class UploadFileCommand extends Command {
 
@@ -74,7 +74,7 @@ public class UploadFileCommand extends Command {
     public void execute() {
 
         try {
-            String destPath = operationBusiness.uploadFile(localFilePath, remoteDir);
+            String destPath = operationBusiness.uploadFile(null, localFilePath, remoteDir);
 
             if (storageElements.length > 0) {
                 StringBuilder sb = new StringBuilder();

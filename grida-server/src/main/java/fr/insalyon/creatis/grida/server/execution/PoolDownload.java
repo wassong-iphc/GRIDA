@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -51,7 +51,7 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class PoolDownload extends Thread {
 
@@ -124,21 +124,21 @@ public class PoolDownload extends Thread {
                 if (operation.getType() == Type.Download) {
 
                     if (operationBusiness.isFolder(operation.getSource())) {
-                        String zipFile = operationBusiness.downloadFolder(
+                        String zipFile = operationBusiness.downloadFolder(operation.getId(),
                                 operation.getDest(), operation.getSource(), true);
                         operation.setDest(zipFile);
 
                     } else {
                         String fileName = FilenameUtils.getName(operation.getSource());
-                        operationBusiness.downloadFile(operation.getDest(),
-                                fileName, operation.getSource());
+                        operationBusiness.downloadFile(operation.getId(),
+                                operation.getDest(), fileName, operation.getSource());
                     }
 
                 } else if (operation.getType() == Type.Download_Files) {
 
                     File file = new File(operation.getDest());
-                    String zipFile = operationBusiness.downloadFiles(operation.getDest(),
-                            operation.getSource().split(Constants.MSG_SEP_2),
+                    String zipFile = operationBusiness.downloadFiles(operation.getId(),
+                            operation.getDest(), operation.getSource().split(Constants.MSG_SEP_2),
                             file.getName());
                     operation.setDest(zipFile);
                 }

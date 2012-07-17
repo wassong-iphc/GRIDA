@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -50,7 +50,7 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class PoolUpload extends Thread {
 
@@ -120,7 +120,8 @@ public class PoolUpload extends Thread {
             try {
                 OperationBusiness operationBusiness = new OperationBusiness(operation.getProxy());
 
-                String path = operationBusiness.uploadFile(operation.getSource(), operation.getDest());
+                String path = operationBusiness.uploadFile(operation.getId(), 
+                        operation.getSource(), operation.getDest());
                 try {
                     new PoolBusiness().addOperation(operation.getProxy(), path, "",
                             Operation.Type.Replicate, operation.getUser());

@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -38,6 +38,7 @@ import fr.insalyon.creatis.grida.common.bean.GridData;
 import fr.insalyon.creatis.grida.server.Configuration;
 import fr.insalyon.creatis.grida.server.dao.DAOException;
 import fr.insalyon.creatis.grida.server.dao.DAOFactory;
+import fr.insalyon.creatis.grida.server.execution.PoolProcessManager;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +54,7 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class LCGOperations {
 
@@ -198,6 +199,7 @@ public class LCGOperations {
 
     /**
      *
+     * @param operationID
      * @param proxy
      * @param localDirPath
      * @param fileName
@@ -205,8 +207,9 @@ public class LCGOperations {
      * @return
      * @throws OperationException
      */
-    public static String downloadFile(String proxy, String localDirPath,
-            String fileName, String remoteFilePath) throws OperationException {
+    public static String downloadFile(String operationID, String proxy,
+            String localDirPath, String fileName, String remoteFilePath)
+            throws OperationException {
 
         try {
             String lfn = "lfn:" + remoteFilePath;
@@ -219,6 +222,8 @@ public class LCGOperations {
                     "--bdii-timeout", "10", "--srm-timeout", "30",
                     "--vo", Configuration.getInstance().getVo(),
                     lfn, localPath);
+
+            PoolProcessManager.getInstance().addProcess(operationID, process);
 
             BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String s = null;
@@ -247,19 +252,22 @@ public class LCGOperations {
         } catch (IOException ex) {
             logger.error(ex);
             throw new OperationException(ex);
+        } finally {
+            PoolProcessManager.getInstance().removeProcess(operationID);
         }
     }
 
     /**
      *
+     * @param operationID Operation identification
      * @param proxy
      * @param localFilePath
      * @param remoteDir
      * @return
      * @throws OperationException
      */
-    public static String uploadFile(String proxy, String localFilePath,
-            String remoteDir) throws OperationException {
+    public static String uploadFile(String operationID, String proxy,
+            String localFilePath, String remoteDir) throws OperationException {
 
         try {
             String localPath = "file:" + localFilePath;
@@ -276,6 +284,8 @@ public class LCGOperations {
                         "--bdii-timeout", "10", "--srm-timeout", "30",
                         "--vo", Configuration.getInstance().getVo(),
                         "-d", se, "-l", lfn, localPath);
+                
+                PoolProcessManager.getInstance().addProcess(operationID, process);
 
                 BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 String s = null;
@@ -290,6 +300,7 @@ public class LCGOperations {
 
                 if (process.exitValue() != 0) {
                     logger.error(cout);
+                    PoolProcessManager.getInstance().removeProcess(operationID);
                 } else {
                     completed = true;
                     break;
@@ -310,6 +321,8 @@ public class LCGOperations {
         } catch (IOException ex) {
             logger.error(ex);
             throw new OperationException(ex);
+        } finally {
+            PoolProcessManager.getInstance().removeProcess(operationID);
         }
     }
 
@@ -471,7 +484,7 @@ public class LCGOperations {
             String lfn = "lfn:" + path;
 
             logger.info("Deleting '" + lfn + "'");
-            Process process = OperationsUtil.getProcess(proxy, "lcg-del", "-v", 
+            Process process = OperationsUtil.getProcess(proxy, "lcg-del", "-v",
                     "-a", "--sendreceive-timeout", "30", lfn);
 
             BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));

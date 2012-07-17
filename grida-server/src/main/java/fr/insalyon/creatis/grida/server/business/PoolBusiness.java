@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -40,10 +40,7 @@ import fr.insalyon.creatis.grida.common.bean.Operation.Type;
 import fr.insalyon.creatis.grida.server.dao.DAOException;
 import fr.insalyon.creatis.grida.server.dao.DAOFactory;
 import fr.insalyon.creatis.grida.server.dao.PoolDAO;
-import fr.insalyon.creatis.grida.server.execution.PoolDelete;
-import fr.insalyon.creatis.grida.server.execution.PoolDownload;
-import fr.insalyon.creatis.grida.server.execution.PoolReplicate;
-import fr.insalyon.creatis.grida.server.execution.PoolUpload;
+import fr.insalyon.creatis.grida.server.execution.*;
 import java.io.File;
 import java.util.Date;
 import java.util.List;
@@ -53,7 +50,7 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class PoolBusiness {
 
@@ -175,6 +172,7 @@ public class PoolBusiness {
 
         try {
             logger.info("Deleting pool operation '" + id + "'.");
+            PoolProcessManager.getInstance().destroyProcess(id);
             Operation operation = poolDAO.getOperationById(id);
             poolDAO.removeOperationById(id);
             removeOperation(operation);
@@ -231,28 +229,25 @@ public class PoolBusiness {
      */
     private void removeOperation(Operation operation) throws DAOException {
 
-        if (operation.getStatus() == Operation.Status.Done) {
+        if (operation.getType() == Operation.Type.Download) {
 
-            if (operation.getType() == Operation.Type.Download) {
+            String name = operation.getDest().endsWith(".zip")
+                    ? operation.getDest()
+                    : operation.getDest() + "/"
+                    + FilenameUtils.getName(operation.getSource());
 
-                String name = operation.getDest().endsWith(".zip")
-                        ? operation.getDest()
-                        : operation.getDest() + "/"
-                        + FilenameUtils.getName(operation.getSource());
+            logger.info("Deleting '" + name + "'.");
+            FileUtils.deleteQuietly(new File(name));
 
-                logger.info("Deleting '" + name + "'.");
-                FileUtils.deleteQuietly(new File(name));
+            poolDAO.removeOperationBySourceAndType(operation.getSource(),
+                    Operation.Type.Download);
 
-                poolDAO.removeOperationBySourceAndType(operation.getSource(),
-                        Operation.Type.Download);
+        } else if (operation.getType() == Operation.Type.Download_Files) {
 
-            } else if (operation.getType() == Operation.Type.Download_Files) {
-
-                logger.info("Deleting '" + operation.getDest() + "'.");
-                FileUtils.deleteQuietly(new File(operation.getDest()));
-                poolDAO.removeOperationByDestAndType(operation.getDest(),
-                        Operation.Type.Download_Files);
-            }
+            logger.info("Deleting '" + operation.getDest() + "'.");
+            FileUtils.deleteQuietly(new File(operation.getDest()));
+            poolDAO.removeOperationByDestAndType(operation.getDest(),
+                    Operation.Type.Download_Files);
         }
     }
 }

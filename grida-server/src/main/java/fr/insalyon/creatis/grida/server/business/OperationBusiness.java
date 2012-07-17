@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -51,7 +51,7 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class OperationBusiness {
 
@@ -108,14 +108,15 @@ public class OperationBusiness {
     /**
      * Downloads a remote file to a local folder.
      *
+     * @param operationID Operation identification
      * @param localDirPath Local folder path
      * @param fileName Remote file name
      * @param remoteFilePath Remote file path
      * @return Local file path
      * @throws Exception
      */
-    public String downloadFile(String localDirPath, String fileName,
-            String remoteFilePath) throws BusinessException {
+    public String downloadFile(String operationID, String localDirPath,
+            String fileName, String remoteFilePath) throws BusinessException {
 
         try {
             File localDir = new File(localDirPath);
@@ -131,8 +132,8 @@ public class OperationBusiness {
 
             } else {
                 if (configuration.isLcgCommandsAvailable()) {
-                    return LCGOperations.downloadFile(proxy, localDirPath,
-                            fileName, remoteFilePath);
+                    return LCGOperations.downloadFile(operationID, proxy,
+                            localDirPath, fileName, remoteFilePath);
                 } else {
                     return VletOperations.downloadFile(proxy, localDir,
                             fileName, remoteFilePath);
@@ -146,13 +147,14 @@ public class OperationBusiness {
     /**
      * Downloads a remote folder to a local folder.
      *
+     * @param operationID Operation identification
      * @param localDirPath
      * @param remoteDirPath
      * @return
      * @throws BusinessException
      */
-    public String downloadFolder(String localDirPath, String remoteDirPath,
-            boolean zipResult) throws BusinessException {
+    public String downloadFolder(String operationID, String localDirPath,
+            String remoteDirPath, boolean zipResult) throws BusinessException {
 
         try {
             File localDir = new File(localDirPath);
@@ -164,10 +166,10 @@ public class OperationBusiness {
                 for (GridData data : listFilesAndFolders(remoteDirPath)) {
                     try {
                         if (data.getType() == GridData.Type.Folder) {
-                            downloadFolder(localDirPath + "/" + data.getName(),
+                            downloadFolder(operationID, localDirPath + "/" + data.getName(),
                                     remoteDirPath + "/" + data.getName(), false);
                         } else {
-                            downloadFile(localDirPath, data.getName(),
+                            downloadFile(operationID, localDirPath, data.getName(),
                                     remoteDirPath + "/" + data.getName());
                         }
                     } catch (BusinessException ex) {
@@ -182,7 +184,7 @@ public class OperationBusiness {
                     FolderZipper.zipFolder(localDir.getAbsolutePath(), localDir.getAbsolutePath() + ".zip");
                     FileUtils.deleteDirectory(new File(localDir.getAbsolutePath()));
                     return localDir.getAbsolutePath() + ".zip";
-                
+
                 } else {
                     return localDir.getAbsolutePath();
                 }
@@ -200,13 +202,14 @@ public class OperationBusiness {
     /**
      * Downloads an array of files to a local folder and zips it.
      *
+     * @param operationID Operation identification
      * @param localDirPath
      * @param remoteFilesPath
      * @param packName
      * @return
      * @throws BusinessException
      */
-    public String downloadFiles(String localDirPath,
+    public String downloadFiles(String operationID, String localDirPath,
             String[] remoteFilesPath, String packName) throws BusinessException {
 
         try {
@@ -216,7 +219,8 @@ public class OperationBusiness {
             for (String remoteFilePath : remoteFilesPath) {
                 try {
                     String fileName = new File(remoteFilePath).getName();
-                    String destPath = downloadFile(localDirPath, fileName, remoteFilePath);
+                    String destPath = downloadFile(operationID, localDirPath,
+                            fileName, remoteFilePath);
                     downloadedFiles.add(destPath);
 
                 } catch (BusinessException ex) {
@@ -245,16 +249,18 @@ public class OperationBusiness {
     /**
      * Uploads a local file to a remote folder.
      *
+     * @param operationID
      * @param localFilePath
      * @param remoteDir
      * @return
      * @throws BusinessException
      */
-    public String uploadFile(String localFilePath, String remoteDir) throws BusinessException {
+    public String uploadFile(String operationID, String localFilePath, 
+            String remoteDir) throws BusinessException {
 
         try {
             if (configuration.isLcgCommandsAvailable()) {
-                return LCGOperations.uploadFile(proxy, localFilePath, remoteDir);
+                return LCGOperations.uploadFile(operationID, proxy, localFilePath, remoteDir);
 
             } else {
                 return VletOperations.uploadFile(proxy, localFilePath, remoteDir);
