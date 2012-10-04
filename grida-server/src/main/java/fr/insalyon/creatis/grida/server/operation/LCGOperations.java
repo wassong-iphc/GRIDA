@@ -89,7 +89,6 @@ public class LCGOperations {
                 logger.error("[LCG] Unable to get modification date for '" + path + "': " + cout);
                 throw new OperationException(cout);
             }
-
             process = null;
 
             String[] line = cout.split("\\s+");
@@ -161,19 +160,19 @@ public class LCGOperations {
                     } else {
                         modifTime = line[5] + " " + line[6] + " " + line[7];
                     }
-                    Long l = null;
+                    Long length = null;
                     try {
-                        l = new Long(line[4]);
+                        length = new Long(line[4]);
                     } catch (java.lang.NumberFormatException e) {
                         logger.warn("Cannot parse long: \"" + line[4] + "\". Setting file length to 0");
-                        l = new Long(0);
+                        length = new Long(0);
                     } catch (java.lang.ArrayIndexOutOfBoundsException e) {
                         logger.warn("Cannot get long. Setting file length to 0");
-                        l = new Long(0);
+                        length = new Long(0);
                     }
 
                     data.add(new GridData(dataName.toString(), type,
-                            l, modifTime, "-", line[0]));
+                            length, modifTime, "-", line[0]));
                 }
             }
             process.waitFor();
@@ -284,7 +283,7 @@ public class LCGOperations {
                         "--bdii-timeout", "10", "--srm-timeout", "30",
                         "--vo", Configuration.getInstance().getVo(),
                         "-d", se, "-l", lfn, localPath);
-                
+
                 PoolProcessManager.getInstance().addProcess(operationID, process);
 
                 BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -645,47 +644,24 @@ public class LCGOperations {
     }
 
     /**
+     * Gets the size of a file or a directory.
      *
      * @param proxy
      * @param path
      * @return
      * @throws OperationException
      */
-    public static long getFileSize(String proxy, String path) throws OperationException {
+    public static long getDataSize(String proxy, String path) throws OperationException {
 
-        try {
-            logger.info("[LCG] getting size of: " + path);
-            Process process = OperationsUtil.getProcess(proxy, "lfc-ls", "-l", path);
-
-            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String s = null;
-            String cout = "";
-
-            long size = 0;
-            while ((s = r.readLine()) != null) {
-                cout += s + "\n";
-                String[] line = s.split("\\s+");
-                size = new Long(line[4]);
+        long size = 0;
+        for (GridData data : listFilesAndFolders(proxy, path)) {
+            if (data.getType() == GridData.Type.Folder) {
+                size += getDataSize(proxy, path + "/" + data.getName());
+            } else {
+                size += data.getLength();
             }
-            process.waitFor();
-            OperationsUtil.close(process);
-            r.close();
-
-            if (process.exitValue() != 0) {
-                logger.error("[LCG] Unable to get size of '" + path + "': " + cout);
-                throw new OperationException(cout);
-            }
-            process = null;
-
-            return size;
-
-        } catch (InterruptedException ex) {
-            logger.error(ex);
-            throw new OperationException(ex);
-        } catch (IOException ex) {
-            logger.error(ex);
-            throw new OperationException(ex);
         }
+        return size;
     }
 
     /**

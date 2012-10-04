@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -55,7 +55,7 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class VletOperations {
 
@@ -391,7 +391,7 @@ public class VletOperations {
      * @return
      * @throws OperationException
      */
-    public static long getFileSize(String proxy, String path) throws OperationException {
+    public static long getDataSize(String proxy, String path) throws OperationException {
 
         try {
             setProxy(proxy);

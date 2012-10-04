@@ -394,13 +394,20 @@ public class OperationBusiness {
         }
     }
 
-    public long getFileSize(String path) throws BusinessException {
+    /**
+     * Gets the size of a file or directory.
+     * 
+     * @param path
+     * @return
+     * @throws BusinessException 
+     */
+    public long getDataSize(String path) throws BusinessException {
 
         try {
             if (configuration.isLcgCommandsAvailable()) {
-                return LCGOperations.getFileSize(proxy, path);
+                return LCGOperations.getDataSize(proxy, path);
             } else {
-                return VletOperations.getFileSize(proxy, path);
+                return VletOperations.getDataSize(proxy, path);
             }
 
         } catch (OperationException ex) {

@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -36,13 +36,14 @@ package fr.insalyon.creatis.grida.server;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class Constants {
 
     // Configuration Labels
     public static final String LAB_AGENT_PORT = "agent.port";
     public static final String LAB_AGENT_RETRYCOUNT = "agent.retrycount";
+    public static final String LAB_AGENT_MIN_AVAILABLE_DISKSPACE = "agent.min.available.diskspace";
     public static final String LAB_BDII_HOST = "bdii.host";
     public static final String LAB_BDII_PORT = "bdii.port";
     public static final String LAB_CACHE_MAX_ENTRIES = "cache.list.max.entries";

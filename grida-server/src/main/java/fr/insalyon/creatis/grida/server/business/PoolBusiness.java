@@ -37,6 +37,7 @@ package fr.insalyon.creatis.grida.server.business;
 import fr.insalyon.creatis.grida.common.Constants;
 import fr.insalyon.creatis.grida.common.bean.Operation;
 import fr.insalyon.creatis.grida.common.bean.Operation.Type;
+import fr.insalyon.creatis.grida.server.Configuration;
 import fr.insalyon.creatis.grida.server.dao.DAOException;
 import fr.insalyon.creatis.grida.server.dao.DAOFactory;
 import fr.insalyon.creatis.grida.server.dao.PoolDAO;
@@ -76,21 +77,29 @@ public class PoolBusiness {
             Type type, String user) throws BusinessException {
 
         try {
-            String id = type + "-" + System.nanoTime();
             OperationBusiness operationBusiness = new OperationBusiness(proxyFileName);
 
             double size = 0;
             if (type == Type.Download) {
-                size = operationBusiness.getFileSize(source);
+                size = operationBusiness.getDataSize(source);
 
             } else if (type == Type.Download_Files) {
                 for (String src : source.split(Constants.MSG_SEP_2)) {
-                    size += operationBusiness.getFileSize(src);
+                    size += operationBusiness.getDataSize(src);
                 }
             }
 
+            String id = type + "-" + System.nanoTime();
             Operation op = new Operation(id, source, dest, type, user,
                     proxyFileName, size);
+            
+            long freeSpace = new File(".").getFreeSpace();
+            long totalSpace = new File(".").getTotalSpace();
+            if (freeSpace - size < totalSpace * Configuration.getInstance().getMinAvailableDiskSpace()) {
+                op.setStatus(Operation.Status.Failed);
+                logger.error("Unable to download '" + source + "' due to disk space limits. Size: " + ((int) size / 1024 / 1024) + " MB.");
+            }
+            
             poolDAO.addOperation(op);
 
             switch (op.getType()) {

@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -47,7 +47,7 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class Configuration {
 
@@ -56,12 +56,13 @@ public class Configuration {
     private static final String confFile = "grida-server.conf";
     // General
     private int port;
+    private int maxRetryCount;
+    private double minAvailableDiskSpace;
     private String lfcHost;
     private String vo;
     private String bdiiHost;
     private String bdiiPort;
     private List<String> preferredSEsList;
-    private int maxRetryCount;
     private List<String> failoverServers;
     private boolean isLcgCommandsAvailable = false;
     // Cache
@@ -105,6 +106,7 @@ public class Configuration {
 
             port = config.getInt(Constants.LAB_AGENT_PORT, 9006);
             maxRetryCount = config.getInt(Constants.LAB_AGENT_RETRYCOUNT, 5);
+            minAvailableDiskSpace = config.getDouble(Constants.LAB_AGENT_MIN_AVAILABLE_DISKSPACE, 0.1);
             lfcHost = config.getString(Constants.LAB_LFC_HOST, "lfc-biomed.in2p3.fr");
             vo = config.getString(Constants.LAB_VO, "biomed");
             bdiiHost = config.getString(Constants.LAB_BDII_HOST, "cclcgtopbdii02.in2p3.fr");
@@ -123,6 +125,7 @@ public class Configuration {
 
             config.setProperty(Constants.LAB_AGENT_PORT, port);
             config.setProperty(Constants.LAB_AGENT_RETRYCOUNT, maxRetryCount);
+            config.setProperty(Constants.LAB_AGENT_MIN_AVAILABLE_DISKSPACE, minAvailableDiskSpace);
             config.setProperty(Constants.LAB_LFC_HOST, lfcHost);
             config.setProperty(Constants.LAB_VO, vo);
             config.setProperty(Constants.LAB_BDII_HOST, bdiiHost);
@@ -263,6 +266,10 @@ public class Configuration {
 
     public int getMaxRetryCount() {
         return maxRetryCount;
+    }
+
+    public double getMinAvailableDiskSpace() {
+        return minAvailableDiskSpace;
     }
 
     public int getCacheListMaxEntries() {
