@@ -56,14 +56,16 @@ public class ListFilesAndFoldersCommand extends Command {
     private boolean refresh;
     private OperationBusiness operationBusiness;
     private CacheBusiness cacheBusiness;
-
+    private boolean listComments;
+    
     public ListFilesAndFoldersCommand(Communication communication,
-            String proxyFileName, String path, String refresh) {
+            String proxyFileName, String path, String refresh, boolean listComments) {
 
         super(communication, proxyFileName);
         this.path = path;
         this.refresh = Boolean.valueOf(refresh);
-
+        this.listComments = listComments;
+        
         operationBusiness = new OperationBusiness(proxyFileName);
         cacheBusiness = new CacheBusiness();
     }
@@ -100,7 +102,7 @@ public class ListFilesAndFoldersCommand extends Command {
     private void getDataList() throws BusinessException {
 
         List<String> dataList = new ArrayList<String>();
-        for (GridData data : operationBusiness.listFilesAndFolders(path)) {
+        for (GridData data : operationBusiness.listFilesAndFolders(path,listComments)) {
 
             String dataPath = data.getType() == GridData.Type.Folder
                     ? data.getName() + Constants.MSG_SEP_2
@@ -111,7 +113,8 @@ public class ListFilesAndFoldersCommand extends Command {
                     + data.getLength() + Constants.MSG_SEP_2
                     + data.getModificationDate() + Constants.MSG_SEP_2
                     + data.getReplicas() + Constants.MSG_SEP_2
-                    + data.getPermissions();
+                    + data.getPermissions() + Constants.MSG_SEP_2
+                    + data.getComment();
 
             communication.sendMessage(dataPath);
             dataList.add(dataPath);

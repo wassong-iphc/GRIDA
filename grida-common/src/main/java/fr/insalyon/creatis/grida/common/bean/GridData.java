@@ -53,18 +53,25 @@ public class GridData {
     private String modificationDate;
     private List<String> replicas;
     private String permissions;
+    private String comment;
 
     public GridData(String name, Type type, String permissions) {
-        this(name, type, 0, "", "", permissions);
+        this(name, type, 0, "", "", permissions, "");
     }
 
     public GridData(String name, Type type, long length, String modificationDate, 
-            String replicasString, String permissions) {
+            String replicasString, String permission){
+        this(name,type,length,modificationDate,replicasString,permission,"");
+    } 
+    
+    public GridData(String name, Type type, long length, String modificationDate, 
+            String replicasString, String permissions, String comment) {
         
         this.name = name;
         this.type = type;
         this.length = length;
         this.modificationDate = modificationDate;
+        this.comment = comment;
         if (permissions.contains(",")) {
             this.permissions = permissions.split(",")[2];
         } else {
@@ -74,7 +81,7 @@ public class GridData {
         replicas = new ArrayList<String>();
         String[] reps = replicasString.split(",");
         for (int i = 2; i < reps.length - 1; i++) {
-            replicas.add(reps[i]);
+             replicas.add(reps[i]);
         }
     }
 
@@ -100,5 +107,9 @@ public class GridData {
 
     public List<String> getReplicas() {
         return replicas;
+    }
+    
+    public String getComment(){
+        return comment;
     }
 }

@@ -123,13 +123,17 @@ public class LCGOperations {
      * @return
      * @throws OperationException
      */
-    public static List<GridData> listFilesAndFolders(String proxy, String path)
-            throws OperationException {
-
-        try {
+       
+    public static List<GridData> listFilesAndFolders(String proxy, String path, boolean listComment) throws OperationException{
+      try {
             logger.info("[LCG] Listing contents of: " + path);
-            Process process = OperationsUtil.getProcess(proxy, "lfc-ls", "-l", path);
-
+            
+            Process process = null ; 
+            if(listComment)
+                process = OperationsUtil.getProcess(proxy, "lfc-ls", "-l", "--comment",path);
+            else //don't list with comments or it will break when LFN contains space
+                process = OperationsUtil.getProcess(proxy, "lfc-ls", "-l",path);
+            
             BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String s = null;
             String cout = "";
@@ -141,16 +145,32 @@ public class LCGOperations {
                 GridData.Type type = line[0].startsWith("d") ? GridData.Type.Folder : GridData.Type.File;
 
                 StringBuilder dataName = new StringBuilder();
-                for (int i = 8; i < line.length; i++) {
-                    if (line[i].equals("->")) {
-                        break;
+                if (!listComment) {
+                    for (int i = 8; i < line.length; i++) {
+                        if (line[i].equals("->")) {
+                            break;
+                        }
+                        if (dataName.length() > 0) {
+                            dataName.append(" ");
+                        }
+                        dataName.append(line[i]);
                     }
-                    if (dataName.length() > 0) {
-                        dataName.append(" ");
+                }else{
+                    //this won't work if the LFC has spaces AND it has no comment
+                    int max = 9;
+                    if (line.length -1 > 9)
+                        max = line.length-1;
+                     for (int i = 8; i < max; i++) {
+                        if (line[i].equals("->")) {
+                            break;
+                        }
+                        if (dataName.length() > 0) {
+                            dataName.append(" ");
+                        }
+                        dataName.append(line[i]);
                     }
-                    dataName.append(line[i]);
                 }
-
+                    
                 if (type == GridData.Type.Folder) {
                     data.add(new GridData(dataName.toString(), type, line[0]));
                 } else {
@@ -170,9 +190,16 @@ public class LCGOperations {
                         logger.warn("Cannot get long. Setting file length to 0");
                         length = new Long(0);
                     }
-
+                    String comment = "";
+                    if (listComment) {
+                        if (line.length < 10) {
+                            logger.warn("Cannot get comment (maybe there is no); setting it to \"\"");
+                        } else {
+                            comment = line[line.length - 1];
+                        }
+                    }
                     data.add(new GridData(dataName.toString(), type,
-                            length, modifTime, "-", line[0]));
+                            length, modifTime, "-", line[0], comment));
                 }
             }
             process.waitFor();
@@ -195,7 +222,7 @@ public class LCGOperations {
             throw new OperationException(ex);
         }
     }
-
+    
     /**
      *
      * @param operationID
@@ -427,7 +454,7 @@ public class LCGOperations {
             String lfn = "lfn:" + path;
             logger.info("[LCG] Deleting folder '" + lfn + "'.");
 
-            for (GridData data : listFilesAndFolders(proxy, path)) {
+            for (GridData data : listFilesAndFolders(proxy, path,false)) {
                 try {
                     if (data.getType() == GridData.Type.Folder) {
                         deleteFolder(proxy, path + "/" + data.getName());
@@ -654,7 +681,7 @@ public class LCGOperations {
     public static long getDataSize(String proxy, String path) throws OperationException {
 
         long size = 0;
-        for (GridData data : listFilesAndFolders(proxy, path)) {
+        for (GridData data : listFilesAndFolders(proxy, path,false)) {
             if (data.getType() == GridData.Type.Folder) {
                 size += getDataSize(proxy, path + "/" + data.getName());
             } else {
@@ -788,6 +815,42 @@ public class LCGOperations {
 
         } catch (DAOException ex) {
             throw new OperationException(ex);
+        } catch (InterruptedException ex) {
+            logger.error(ex);
+            throw new OperationException(ex);
+        } catch (IOException ex) {
+            logger.error(ex);
+            throw new OperationException(ex);
+        }
+    }
+
+    public static void setComment(String proxy, String lfn, String comment) throws OperationException {
+          try {
+            logger.info("[LCG] Setting comment of LFN '" + lfn + "' to '" + comment + "'.");
+
+            if (!exists(proxy,lfn)) {
+                String message="[LCG] LFN " + lfn + " does not exist.";
+                logger.error(message);
+                throw new OperationException(message);
+            }
+            Process process = OperationsUtil.getProcess(proxy, "lfc-setcomment", lfn, comment);
+            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String s = null;
+            String cout = "";
+
+            while ((s = r.readLine()) != null) {
+                cout += s + "\n";
+            }
+            process.waitFor();
+            OperationsUtil.close(process);
+            r.close();
+
+            if (process.exitValue() != 0) {
+                logger.error("Unable to set comment of '" + lfn + "': " + cout);
+                throw new OperationException(cout);
+            }
+            process = null;
+
         } catch (InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);

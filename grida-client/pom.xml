@@ -5,7 +5,7 @@
     <groupId>fr.insalyon.creatis</groupId>
     <artifactId>grida-client</artifactId>
     <packaging>jar</packaging>
-    <version>1.4</version>
+    <version>1.4.1</version>
     <name>GRIDA-Client</name>
     <url>http://vip.creatis.insa-lyon.fr:9002/projects/vletagent</url>
     
@@ -34,7 +34,7 @@
         <dependency>
             <groupId>fr.insalyon.creatis</groupId>
             <artifactId>grida-common</artifactId>
-            <version>1.4</version>
+            <version>1.4.1</version>
         </dependency>
         
     </dependencies>

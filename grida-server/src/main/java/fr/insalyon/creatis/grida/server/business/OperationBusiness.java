@@ -91,20 +91,22 @@ public class OperationBusiness {
      * @return
      * @throws BusinessException
      */
-    public List<GridData> listFilesAndFolders(String path) throws BusinessException {
+    public List<GridData> listFilesAndFolders(String path, boolean listComments) throws BusinessException {
 
         try {
             if (configuration.isLcgCommandsAvailable()) {
-                return LCGOperations.listFilesAndFolders(proxy, path);
+                return LCGOperations.listFilesAndFolders(proxy, path,listComments);
 
             } else {
+                if(listComments)
+                    throw new BusinessException("Listing of file comments not implemented in VLET");
                 return VletOperations.listFilesAndFolders(proxy, path);
             }
         } catch (OperationException ex) {
             throw new BusinessException(ex);
         }
     }
-
+    
     /**
      * Downloads a remote file to a local folder.
      *
@@ -163,7 +165,7 @@ public class OperationBusiness {
             List<String> errorFiles = new ArrayList<String>();
             if (exist(remoteDirPath)) {
 
-                for (GridData data : listFilesAndFolders(remoteDirPath)) {
+                for (GridData data : listFilesAndFolders(remoteDirPath,false)) {
                     try {
                         if (data.getType() == GridData.Type.Folder) {
                             downloadFolder(operationID, localDirPath + "/" + data.getName(),
@@ -434,5 +436,18 @@ public class OperationBusiness {
         }
         out.close();
         return errorFileName;
+    }
+
+    public void setComment(String lfn, String comment) throws BusinessException {
+        try{
+     
+            if (configuration.isLcgCommandsAvailable()) {
+                LCGOperations.setComment(proxy, lfn, comment);
+            } else {
+                VletOperations.setComment(proxy, lfn,comment);
+            }
+        }catch(OperationException e){
+            throw new BusinessException(e);
+        }
     }
 }

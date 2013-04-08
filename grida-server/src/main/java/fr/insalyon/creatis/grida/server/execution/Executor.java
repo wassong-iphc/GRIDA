@@ -100,7 +100,7 @@ public class Executor extends Thread {
                     return new GetRemoteFolderCommand(communication, proxy, tokens[2], tokens[3]);
 
                 case ExecutorConstants.COM_LIST_FILES_AND_FOLDERS:
-                    return new ListFilesAndFoldersCommand(communication, proxy, tokens[2], tokens[3]);
+                    return new ListFilesAndFoldersCommand(communication, proxy, tokens[2], tokens[3],false);
 
                 case ExecutorConstants.COM_GET_MODIFICATION_DATE:
                     return new GetModificationDateCommand(communication, proxy, tokens[2].split(Constants.MSG_SEP_2));
@@ -125,6 +125,12 @@ public class Executor extends Thread {
 
                 case ExecutorConstants.COM_EXIST:
                     return new ExistDataCommand(communication, proxy, tokens[2]);
+                    
+                case ExecutorConstants.COM_SET_COMMENT:
+                    return new SetCommentCommand(communication,proxy,tokens[2],tokens[3]);
+                    
+                case ExecutorConstants.COM_LIST_FILES_AND_FOLDERS_WITH_COMMENTS:
+                    return new ListFilesAndFoldersCommand(communication,proxy,tokens[2],tokens[3],true);
 
                 // Cache Operations
                 case ExecutorConstants.CACHE_LIST_FILES:

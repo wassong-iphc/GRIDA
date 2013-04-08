@@ -403,4 +403,8 @@ public class VletOperations {
             throw new OperationException(ex);
         }
     }
+
+    public static void setComment(String proxy, String lfn, String comment) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
 }

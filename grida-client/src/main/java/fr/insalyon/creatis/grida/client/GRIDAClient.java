@@ -56,7 +56,7 @@ public class GRIDAClient extends AbstractGRIDAClient {
      * @param proxyPath Path of the user's proxy file
      */
     public GRIDAClient(String host, int port, String proxyPath) {
-        
+
         super(host, port, proxyPath);
     }
 
@@ -127,11 +127,27 @@ public class GRIDAClient extends AbstractGRIDAClient {
      * @throws GRIDAClientException 
      */
     public List<GridData> getFolderData(String dir, boolean refresh) throws GRIDAClientException {
+        return getFolderData(dir,refresh,false);
+    }
+
+    /**
+     * Gets a list of files and folders from a directory.
+     * 
+     * @param dir Path of the directory
+     * @param refresh Tells if the server should try to read data from cache
+     * @param listComments tells if the server should try to list comments (crashes if LFN has space and no comment)
+     * @return List of files and folders from a directory
+     * @throws GRIDAClientException 
+     */
+    public List<GridData> getFolderData(String dir, boolean refresh, boolean listComments) throws GRIDAClientException {
 
         try {
             Communication communication = getCommunication();
+
+            int messageType = listComments ? ExecutorConstants.COM_LIST_FILES_AND_FOLDERS_WITH_COMMENTS : ExecutorConstants.COM_LIST_FILES_AND_FOLDERS;
+                
             communication.sendMessage(
-                    ExecutorConstants.COM_LIST_FILES_AND_FOLDERS + Constants.MSG_SEP_1
+                    messageType + Constants.MSG_SEP_1
                     + proxyPath + Constants.MSG_SEP_1
                     + Util.removeLfnFromPath(dir) + Constants.MSG_SEP_1
                     + refresh);
@@ -149,7 +165,10 @@ public class GRIDAClient extends AbstractGRIDAClient {
                         filesList.add(new GridData(d[0], GridData.Type.Folder, d[2]));
 
                     } else {
-                        filesList.add(new GridData(d[0], GridData.Type.File, new Long(d[2]), d[3], d[4], d[5]));
+                        if(d.length == 7)
+                            filesList.add(new GridData(d[0], GridData.Type.File, new Long(d[2]), d[3], d[4], d[5],d[6]));
+                        else
+                            filesList.add(new GridData(d[0], GridData.Type.File, new Long(d[2]), d[3], d[4], d[5],""));
                     }
                 }
             }
@@ -443,9 +462,25 @@ public class GRIDAClient extends AbstractGRIDAClient {
 
             boolean exist = Boolean.valueOf(communication.getMessage());
             communication.close();
-            
+
             return exist;
 
+        } catch (IOException ex) {
+            throw new GRIDAClientException(ex);
+        }
+    }
+
+    public void setComment(String lfn, String rev) throws GRIDAClientException {
+        try {
+            Communication communication = getCommunication();
+            communication.sendMessage(
+                    ExecutorConstants.COM_SET_COMMENT + Constants.MSG_SEP_1
+                    + proxyPath + Constants.MSG_SEP_1
+                    + Util.removeLfnFromPath(lfn) + Constants.MSG_SEP_1
+                    + rev);
+            communication.sendEndOfMessage();
+            communication.getMessage();
+            communication.close();
         } catch (IOException ex) {
             throw new GRIDAClientException(ex);
         }

@@ -52,6 +52,8 @@ public class ExecutorConstants {
     public static final int COM_CREATE_FOLDER = 109;
     public static final int COM_RENAME = 110;
     public static final int COM_EXIST = 111;
+    public static final int COM_SET_COMMENT = 112;
+    public static final int COM_LIST_FILES_AND_FOLDERS_WITH_COMMENTS = 113;
     // Cache Commands
     public static final int CACHE_LIST_FILES = 201;
     public static final int CACHE_DELETE_FILE = 202;
