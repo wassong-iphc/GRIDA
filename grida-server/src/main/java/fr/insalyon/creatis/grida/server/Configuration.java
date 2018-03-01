@@ -38,9 +38,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import nl.uva.vlet.GlobalConfig;
-import nl.uva.vlet.vfs.VFSClient;
-import nl.uva.vlet.vrs.VRSContext;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.Logger;
@@ -76,9 +73,6 @@ public class Configuration {
     private int maxSimultaneousUploads;
     private int maxSimultaneousDeletes;
     private int maxSimultaneousReplications;
-    // Vlet
-    private VRSContext vrsContext;
-    private VFSClient vfsClient;
 
     public synchronized static Configuration getInstance() {
 
@@ -94,7 +88,7 @@ public class Configuration {
         createCachePath();
         configureLcgCommands();
         if (!isLcgCommandsAvailable) {
-            configureVlet();
+            System.exit(1);
         }
     }
 
@@ -197,51 +191,12 @@ public class Configuration {
         }
     }
 
-    private void configureVlet() {
-
-        // Create vlet properties file
-        File vletDir = new File(System.getenv("HOME") + "/.vletrc");
-        if (!vletDir.exists()) {
-            vletDir.mkdir();
-        }
-        File vletProp = new File(System.getenv("HOME") + "/.vletrc/vletrc.prop");
-        if (!vletProp.exists()) {
-            try {
-                vletProp.createNewFile();
-            } catch (IOException ex) {
-                logger.error("Unable to create vlet properties file: " + ex.getMessage());
-                logger.info("Stopping GRIDA Server.");
-                System.exit(1);
-            }
-        }
-
-        // Configuring vlet
-        GlobalConfig.setSystemProperty("bdii.hostname", bdiiHost);
-        GlobalConfig.setSystemProperty("bdii.port", bdiiPort);
-        if (!preferredSEsList.isEmpty()) {
-            setPreferredSEs();
-            GlobalConfig.setSystemProperty("lfc.replicaCreationMode", "PreferredRandom");
-            GlobalConfig.setSystemProperty("lfc.replicaSelectionMode", "AllRandom");
-            GlobalConfig.setSystemProperty("lfc.replicaNrOfTries", "5");
-        }
-        vrsContext = new VRSContext();
-        vfsClient = new VFSClient(vrsContext);
-    }
-
     public String getLfcHost() {
         return lfcHost;
     }
 
     public int getPort() {
         return port;
-    }
-
-    public VFSClient getVfsClient() {
-        return vfsClient;
-    }
-
-    public VRSContext getVrsContext() {
-        return vrsContext;
     }
 
     public List<String> getPreferredSEs() {
@@ -257,11 +212,10 @@ public class Configuration {
             }
             sb.append(se);
         }
-        GlobalConfig.setSystemProperty("lfc.listPreferredSEs", sb.toString());
     }
 
     public void setPreferredSEs(String list) {
-        GlobalConfig.setSystemProperty("lfc.listPreferredSEs", list);
+        // This was only used for vlet.  Should it be removed ????
     }
 
     public int getMaxRetryCount() {
