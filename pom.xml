@@ -9,7 +9,7 @@
     <description>GRID data manager Agent</description>
     <inceptionYear>2011</inceptionYear>
     <url>http://vip.creatis.insa-lyon.fr:9002/projects/vletagent</url>
-    
+
     <licenses>
         <license>
             <name>CeCILL-B, Version 1.0</name>
@@ -17,12 +17,12 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-    
+
     <organization>
         <name>CREATIS-LRMN</name>
         <url>http://www.creatis.insa-lyon.fr/</url>
     </organization>
-    
+
     <developers>
         <developer>
             <id>silva</id>
@@ -34,17 +34,16 @@
             <timezone>1</timezone>
         </developer>
     </developers>
-    
+
     <modules>
         <module>grida-common</module>
         <module>grida-client</module>
         <module>grida-server</module>
     </modules>
-       
+
     <scm>
         <connection>scm:svn:https://svn.creatis.insa-lyon.fr/svn/vip/GRIDA</connection>
         <developerConnection>scm:svn:https://svn.creatis.insa-lyon.fr/svn/vip/GRIDA</developerConnection>
         <url>http://vip.creatis.insa-lyon.fr:9002/projects/vletagent</url>
     </scm>
 </project>
-
