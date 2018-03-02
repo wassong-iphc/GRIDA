@@ -53,29 +53,25 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
 /**
- *
  * @author Rafael Ferreira da Silva
  */
-public class LCGOperations {
+public class LCGOperations implements Operations {
 
     private final static Logger logger = Logger.getLogger(LCGOperations.class);
 
-    /**
-     *
-     * @param proxy
-     * @param path
-     * @return
-     * @throws OperationException
-     */
-    public static long getModificationDate(String proxy, String path) throws OperationException {
+    public long getModificationDate(String proxy, String path)
+        throws OperationException {
 
         try {
             logger.info("[LCG] Getting modification date for: " + path);
-            Process process = OperationsUtil.getProcess(proxy, "lfc-ls", "-ld", path);
-            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            Process process = OperationsUtil.getProcess(
+                proxy, "lfc-ls", "-ld", path);
+            BufferedReader r = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
             String s = null;
             String cout = "";
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy/MMM/dd HH:mm");
+            SimpleDateFormat formatter =
+                new SimpleDateFormat("yyyy/MMM/dd HH:mm");
             Date modifTime = null;
 
             while ((s = r.readLine()) != null) {
@@ -86,7 +82,9 @@ public class LCGOperations {
             r.close();
 
             if (process.exitValue() != 0) {
-                logger.error("[LCG] Unable to get modification date for '" + path + "': " + cout);
+                logger.error(
+                    "[LCG] Unable to get modification date for '" + path +
+                    "': " + cout);
                 throw new OperationException(cout);
             }
             process = null;
@@ -95,15 +93,14 @@ public class LCGOperations {
 
             if (line[7].contains(":")) {
                 modifTime = formatter.parse(
-                        Calendar.getInstance().get(Calendar.YEAR) + "/"
-                        + line[5] + "/" + line[6] + " " + line[7]);
+                    Calendar.getInstance().get(Calendar.YEAR) + "/"
+                    + line[5] + "/" + line[6] + " " + line[7]);
 
             } else {
                 modifTime = formatter.parse(
-                        line[7] + "/" + line[5] + "/" + line[6] + " 00:00");
+                    line[7] + "/" + line[5] + "/" + line[6] + " 00:00");
             }
             return modifTime.getTime();
-
         } catch (ParseException ex) {
             logger.error(ex);
             throw new OperationException(ex);
@@ -116,25 +113,26 @@ public class LCGOperations {
         }
     }
 
-    /**
-     *
-     * @param proxy
-     * @param path
-     * @return
-     * @throws OperationException
-     */
-       
-    public static List<GridData> listFilesAndFolders(String proxy, String path, boolean listComment) throws OperationException{
-      try {
+    public List<GridData> listFilesAndFolders(
+        String proxy, String path, boolean listComment)
+        throws OperationException {
+
+        try {
             logger.info("[LCG] Listing contents of: " + path);
-            
-            Process process = null ; 
-            if(listComment)
-                process = OperationsUtil.getProcess(proxy, "lfc-ls", "-l", "--comment",path);
-            else //don't list with comments or it will break when LFN contains space
-                process = OperationsUtil.getProcess(proxy, "lfc-ls", "-l",path);
-            
-            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+            Process process = null ;
+            if (listComment) {
+                process = OperationsUtil.getProcess(
+                    proxy, "lfc-ls", "-l", "--comment", path);
+            } else {
+                // Don't list with comments or it will break when LFN contains
+                // space.
+                process = OperationsUtil.getProcess(
+                    proxy, "lfc-ls", "-l", path);
+            }
+
+            BufferedReader r = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
             String s = null;
             String cout = "";
             List<GridData> data = new ArrayList<GridData>();
@@ -142,7 +140,9 @@ public class LCGOperations {
             while ((s = r.readLine()) != null) {
                 cout += s + "\n";
                 String[] line = s.split("\\s+");
-                GridData.Type type = line[0].startsWith("d") ? GridData.Type.Folder : GridData.Type.File;
+                GridData.Type type = line[0].startsWith("d")
+                    ? GridData.Type.Folder
+                    : GridData.Type.File;
 
                 StringBuilder dataName = new StringBuilder();
                 if (!listComment) {
@@ -155,12 +155,13 @@ public class LCGOperations {
                         }
                         dataName.append(line[i]);
                     }
-                }else{
-                    //this won't work if the LFC has spaces AND it has no comment
+                } else {
+                    // This won't work if the LFC has spaces AND it has no
+                    // comment:
                     int max = 9;
                     if (line.length -1 > 9)
                         max = line.length-1;
-                     for (int i = 8; i < max; i++) {
+                    for (int i = 8; i < max; i++) {
                         if (line[i].equals("->")) {
                             break;
                         }
@@ -170,7 +171,7 @@ public class LCGOperations {
                         dataName.append(line[i]);
                     }
                 }
-                    
+
                 if (type == GridData.Type.Folder) {
                     data.add(new GridData(dataName.toString(), type, line[0]));
                 } else {
@@ -184,10 +185,12 @@ public class LCGOperations {
                     try {
                         length = new Long(line[4]);
                     } catch (java.lang.NumberFormatException e) {
-                        logger.warn("Cannot parse long: \"" + line[4] + "\". Setting file length to 0");
+                        logger.warn("Cannot parse long: \"" + line[4] +
+                                    "\". Setting file length to 0");
                         length = new Long(0);
                     } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-                        logger.warn("Cannot get long. Setting file length to 0");
+                        logger.warn(
+                            "Cannot get long. Setting file length to 0");
                         length = new Long(0);
                     }
                     String comment = "";
@@ -198,8 +201,14 @@ public class LCGOperations {
                             comment = line[line.length - 1];
                         }
                     }
-                    data.add(new GridData(dataName.toString(), type,
-                            length, modifTime, "-", line[0], comment));
+                    data.add(new GridData(
+                                 dataName.toString(),
+                                 type,
+                                 length,
+                                 modifTime,
+                                 "-",
+                                 line[0],
+                                 comment));
                 }
             }
             process.waitFor();
@@ -207,13 +216,13 @@ public class LCGOperations {
             r.close();
 
             if (process.exitValue() != 0) {
-                logger.error("[LCG] Unable to list folder '" + path + "': " + cout);
+                logger.error("[LCG] Unable to list folder '" + path +
+                             "': " + cout);
                 throw new OperationException(cout);
             }
             process = null;
 
             return data;
-
         } catch (InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);
@@ -222,20 +231,14 @@ public class LCGOperations {
             throw new OperationException(ex);
         }
     }
-    
-    /**
-     *
-     * @param operationID
-     * @param proxy
-     * @param localDirPath
-     * @param fileName
-     * @param remoteFilePath
-     * @return
-     * @throws OperationException
-     */
-    public static String downloadFile(String operationID, String proxy,
-            String localDirPath, String fileName, String remoteFilePath)
-            throws OperationException {
+
+    public String downloadFile(
+        String operationID,
+        String proxy,
+        String localDirPath,
+        String fileName,
+        String remoteFilePath)
+        throws OperationException {
 
         try {
             String lfn = "lfn:" + remoteFilePath;
@@ -243,15 +246,17 @@ public class LCGOperations {
 
             logger.info("[LCG] Downloading: " + lfn + " - To: " + localPath);
 
-            Process process = OperationsUtil.getProcess(proxy, "lcg-cp", "-v",
-                    "--connect-timeout", "10", "--sendreceive-timeout", "900",
-                    "--bdii-timeout", "10", "--srm-timeout", "30",
-                    "--vo", Configuration.getInstance().getVo(),
-                    lfn, localPath);
+            Process process = OperationsUtil.getProcess(
+                proxy, "lcg-cp", "-v",
+                "--connect-timeout", "10", "--sendreceive-timeout", "900",
+                "--bdii-timeout", "10", "--srm-timeout", "30",
+                "--vo", Configuration.getInstance().getVo(),
+                lfn, localPath);
 
             PoolProcessManager.getInstance().addProcess(operationID, process);
 
-            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader r = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
             String s = null;
             String cout = "";
 
@@ -271,7 +276,6 @@ public class LCGOperations {
             process = null;
 
             return localDirPath + "/" + fileName;
-
         } catch (InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);
@@ -283,17 +287,11 @@ public class LCGOperations {
         }
     }
 
-    /**
-     *
-     * @param operationID Operation identification
-     * @param proxy
-     * @param localFilePath
-     * @param remoteDir
-     * @return
-     * @throws OperationException
-     */
-    public static String uploadFile(String operationID, String proxy,
-            String localFilePath, String remoteDir) throws OperationException {
+    public String uploadFile(
+        String operationID,
+        String proxy,
+        String localFilePath,
+        String remoteDir) throws OperationException {
 
         try {
             String localPath = "file:" + localFilePath;
@@ -301,19 +299,23 @@ public class LCGOperations {
             String lfn = "lfn:" + remoteDir + "/" + fileName;
             boolean completed = false;
 
-            logger.info("[LCG] Uploading file: " + localFilePath + " - To: " + lfn);
+            logger.info("[LCG] Uploading file: " + localFilePath +
+                        " - To: " + lfn);
 
             for (String se : Configuration.getInstance().getPreferredSEs()) {
 
-                Process process = OperationsUtil.getProcess(proxy, "lcg-cr", "-v",
-                        "--connect-timeout", "10", "--sendreceive-timeout", "900",
-                        "--bdii-timeout", "10", "--srm-timeout", "30",
-                        "--vo", Configuration.getInstance().getVo(),
-                        "-d", se, "-l", lfn, localPath);
+                Process process = OperationsUtil.getProcess(
+                    proxy, "lcg-cr", "-v",
+                    "--connect-timeout", "10", "--sendreceive-timeout", "900",
+                    "--bdii-timeout", "10", "--srm-timeout", "30",
+                    "--vo", Configuration.getInstance().getVo(),
+                    "-d", se, "-l", lfn, localPath);
 
-                PoolProcessManager.getInstance().addProcess(operationID, process);
+                PoolProcessManager.getInstance()
+                    .addProcess(operationID, process);
 
-                BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                BufferedReader r = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()));
                 String s = null;
                 String cout = "";
 
@@ -335,12 +337,12 @@ public class LCGOperations {
             }
 
             if (!completed) {
-                throw new OperationException("Failed to perform upload from LCG command.");
+                throw new OperationException(
+                    "Failed to perform upload from LCG command.");
             }
 
             FileUtils.deleteQuietly(new File(localFilePath));
             return remoteDir + "/" + fileName;
-
         } catch (InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);
@@ -352,15 +354,8 @@ public class LCGOperations {
         }
     }
 
-    /**
-     *
-     * @param proxy
-     * @param sourcePath
-     * @return
-     * @throws OperationException
-     */
-    public static void replicateFile(String proxy, String sourcePath)
-            throws OperationException {
+    public void replicateFile(String proxy, String sourcePath)
+        throws OperationException {
 
         try {
             String lfn = "lfn:" + sourcePath;
@@ -368,13 +363,15 @@ public class LCGOperations {
             for (String se : Configuration.getInstance().getPreferredSEs()) {
                 logger.info("[LCG] Replicating: " + lfn + " - To: " + se);
 
-                Process process = OperationsUtil.getProcess(proxy, "lcg-rep", "-v",
-                        "--connect-timeout", "10", "--sendreceive-timeout", "900",
-                        "--bdii-timeout", "10", "--srm-timeout", "30",
-                        "--vo", Configuration.getInstance().getVo(),
-                        "-d", se, lfn);
+                Process process = OperationsUtil.getProcess(
+                    proxy, "lcg-rep", "-v",
+                    "--connect-timeout", "10", "--sendreceive-timeout", "900",
+                    "--bdii-timeout", "10", "--srm-timeout", "30",
+                    "--vo", Configuration.getInstance().getVo(),
+                    "-d", se, lfn);
 
-                BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                BufferedReader r = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()));
                 String s = null;
                 String cout = "";
 
@@ -391,7 +388,6 @@ public class LCGOperations {
                 }
                 process = null;
             }
-
         } catch (InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);
@@ -401,18 +397,13 @@ public class LCGOperations {
         }
     }
 
-    /**
-     *
-     * @param proxy
-     * @param path
-     * @return
-     * @throws OperationException
-     */
-    public static boolean isDir(String proxy, String path) throws OperationException {
+    public boolean isDir(String proxy, String path) throws OperationException {
 
         try {
-            Process process = OperationsUtil.getProcess(proxy, "lfc-ls", "-ld", path);
-            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            Process process = OperationsUtil.getProcess(
+                proxy, "lfc-ls", "-ld", path);
+            BufferedReader r = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
             String s = null;
             String cout = "";
 
@@ -425,14 +416,13 @@ public class LCGOperations {
 
             if (process.exitValue() != 0) {
                 logger.error("Unable verify data for '" + path + "': " + cout);
-                throw new OperationException("Unable verify data for '" + path + "': " + cout);
-
+                throw new OperationException(
+                    "Unable verify data for '" + path + "': " + cout);
             }
             process = null;
 
             String[] line = cout.split("\\s+");
             return line[0].startsWith("d") ? true : false;
-
         } catch (InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);
@@ -442,13 +432,8 @@ public class LCGOperations {
         }
     }
 
-    /**
-     *
-     * @param proxy
-     * @param path
-     * @throws Operation Exception
-     */
-    public static void deleteFolder(String proxy, String path) throws OperationException {
+    public void deleteFolder(String proxy, String path)
+        throws OperationException {
 
         try {
             String lfn = "lfn:" + path;
@@ -462,11 +447,15 @@ public class LCGOperations {
                         deleteFile(proxy, path + "/" + data.getName());
                     }
                 } catch (OperationException ex) {
+                    // Exception is already logged.  We ignore it to continue
+                    // the deletion for the other files.
                 }
             }
 
-            Process process = OperationsUtil.getProcess(proxy, "lfc-rm", "-r", path);
-            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            Process process = OperationsUtil.getProcess(
+                proxy, "lfc-rm", "-r", path);
+            BufferedReader r = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
             String s = null;
             String cout = "";
 
@@ -482,7 +471,6 @@ public class LCGOperations {
                 throw new OperationException(cout);
             }
             process = null;
-
         } catch (InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);
@@ -492,14 +480,8 @@ public class LCGOperations {
         }
     }
 
-    /**
-     *
-     * @param proxy
-     * @param path
-     * @return
-     * @throws OperationException
-     */
-    public static void deleteFile(String proxy, String path) throws OperationException {
+    public void deleteFile(String proxy, String path)
+        throws OperationException {
 
         try {
             try {
@@ -510,10 +492,12 @@ public class LCGOperations {
             String lfn = "lfn:" + path;
 
             logger.info("Deleting '" + lfn + "'");
-            Process process = OperationsUtil.getProcess(proxy, "lcg-del", "-v",
-                    "-a", "--sendreceive-timeout", "30", lfn);
+            Process process = OperationsUtil.getProcess(
+                proxy, "lcg-del", "-v",
+                "-a", "--sendreceive-timeout", "30", lfn);
 
-            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader r = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
             String s = null;
             String cout = "";
 
@@ -524,18 +508,22 @@ public class LCGOperations {
             OperationsUtil.close(process);
             r.close();
 
-            if (process.exitValue() != 0 && !cout.contains("No such file or directory")) {
+            if (process.exitValue() != 0 &&
+                !cout.contains("No such file or directory")) {
 
                 if (cout.contains("SRM_INVALID_PATH")) {
-                    unregister(proxy, path, getGUID(proxy, path), getSURL(proxy, path));
-
+                    unregister(
+                        proxy,
+                        path,
+                        getGUID(proxy, path),
+                        getSURL(proxy, path));
                 } else {
-                    logger.error("Unable to delete file '" + lfn + "': " + cout);
+                    logger.error(
+                        "Unable to delete file '" + lfn + "': " + cout);
                     throw new OperationException(cout);
                 }
             }
             process = null;
-
         } catch (InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);
@@ -545,21 +533,18 @@ public class LCGOperations {
         }
     }
 
-    /**
-     *
-     * @param proxy
-     * @param path
-     * @throws Exception
-     */
-    public static void createFolder(String proxy, String path) throws OperationException {
+    public void createFolder(String proxy, String path)
+        throws OperationException {
 
         try {
             logger.info("[LCG] Creating folder: " + path);
 
             if (!exists(proxy, path)) {
 
-                Process process = OperationsUtil.getProcess(proxy, "lfc-mkdir", "-p", path);
-                BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                Process process = OperationsUtil.getProcess(
+                    proxy, "lfc-mkdir", "-p", path);
+                BufferedReader r = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()));
                 String s = null;
                 String cout = "";
 
@@ -571,7 +556,8 @@ public class LCGOperations {
                 r.close();
 
                 if (process.exitValue() != 0) {
-                    logger.error("Unable to create folder '" + path + "': " + cout);
+                    logger.error(
+                        "Unable to create folder '" + path + "': " + cout);
                     throw new OperationException(cout);
                 }
                 process = null;
@@ -585,24 +571,23 @@ public class LCGOperations {
         }
     }
 
-    /**
-     *
-     * @param proxy
-     * @param oldPath
-     * @param newPath
-     * @throws OperationException
-     */
-    public static void rename(String proxy, String oldPath, String newPath) throws OperationException {
+    public void rename(String proxy, String oldPath, String newPath)
+        throws OperationException {
 
         try {
-            logger.info("[LCG] Renaming '" + oldPath + "' to '" + newPath + "'.");
+            logger.info(
+                "[LCG] Renaming '" + oldPath + "' to '" + newPath + "'.");
 
             if (exists(proxy, newPath)) {
-                logger.warn("[LCG] File " + newPath + " already exists. Trying with new name.");
-                newPath += new SimpleDateFormat("-yyyy-MM-dd_HH-mm-ss").format(new Date());
+                logger.warn("[LCG] File " + newPath +
+                            " already exists. Trying with new name.");
+                newPath += new SimpleDateFormat("-yyyy-MM-dd_HH-mm-ss")
+                    .format(new Date());
             }
-            Process process = OperationsUtil.getProcess(proxy, "lfc-rename", oldPath, newPath);
-            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            Process process = OperationsUtil.getProcess(
+                proxy, "lfc-rename", oldPath, newPath);
+            BufferedReader r = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
             String s = null;
             String cout = "";
 
@@ -618,7 +603,6 @@ public class LCGOperations {
                 throw new OperationException(cout);
             }
             process = null;
-
         } catch (InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);
@@ -628,18 +612,13 @@ public class LCGOperations {
         }
     }
 
-    /**
-     *
-     * @param proxy
-     * @param path
-     * @return
-     * @throws Exception
-     */
-    public static boolean exists(String proxy, String path) throws OperationException {
+    public boolean exists(String proxy, String path) throws OperationException {
 
         try {
-            Process process = OperationsUtil.getProcess(proxy, "lfc-ls", "-ld", path);
-            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            Process process = OperationsUtil.getProcess(
+                proxy, "lfc-ls", "-ld", path);
+            BufferedReader r = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
             String s = null;
             String cout = "";
 
@@ -654,7 +633,8 @@ public class LCGOperations {
                 if (cout.contains("No such file or directory")) {
                     return false;
                 }
-                logger.error("Unable verify data existence for '" + path + "': " + cout);
+                logger.error(
+                    "Unable verify data existence for '" + path + "': " + cout);
                 throw new OperationException(cout);
             }
             process = null;
@@ -670,15 +650,9 @@ public class LCGOperations {
         }
     }
 
-    /**
-     * Gets the size of a file or a directory.
-     *
-     * @param proxy
-     * @param path
-     * @return
-     * @throws OperationException
-     */
-    public static long getDataSize(String proxy, String path) throws OperationException {
+    /** Gets the size of a file or a directory. */
+    public long getDataSize(String proxy, String path)
+        throws OperationException {
 
         long size = 0;
         for (GridData data : listFilesAndFolders(proxy, path,false)) {
@@ -691,20 +665,16 @@ public class LCGOperations {
         return size;
     }
 
-    /**
-     *
-     * @param proxy
-     * @param path
-     * @return
-     * @throws OperationException
-     */
-    private static String getGUID(String proxy, String path) throws OperationException {
+    private static String getGUID(String proxy, String path)
+        throws OperationException {
 
         try {
             logger.info("[LCG] Getting GUID of: " + path);
-            Process process = OperationsUtil.getProcess(proxy, "lcg-lg", "lfn:" + path);
+            Process process = OperationsUtil.getProcess(
+                proxy, "lcg-lg", "lfn:" + path);
 
-            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader r = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
             String s = null;
             String cout = "";
 
@@ -718,13 +688,13 @@ public class LCGOperations {
             r.close();
 
             if (process.exitValue() != 0) {
-                logger.error("[LCG] Unable to get GUID of '" + path + "': " + cout);
+                logger.error(
+                    "[LCG] Unable to get GUID of '" + path + "': " + cout);
                 throw new OperationException(cout);
             }
             process = null;
 
             return guid;
-
         } catch (InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);
@@ -734,20 +704,16 @@ public class LCGOperations {
         }
     }
 
-    /**
-     *
-     * @param proxy
-     * @param path
-     * @return
-     * @throws OperationException
-     */
-    private static String[] getSURL(String proxy, String path) throws OperationException {
+    private static String[] getSURL(String proxy, String path)
+        throws OperationException {
 
         try {
             logger.info("[LCG] Getting SURL of: " + path);
-            Process process = OperationsUtil.getProcess(proxy, "lcg-lr", "lfn:" + path);
+            Process process = OperationsUtil.getProcess(
+                proxy, "lcg-lr", "lfn:" + path);
 
-            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader r = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
             String s = null;
             String cout = "";
 
@@ -761,13 +727,13 @@ public class LCGOperations {
             r.close();
 
             if (process.exitValue() != 0) {
-                logger.error("[LCG] Unable to get SURL of '" + path + "': " + cout);
+                logger.error(
+                    "[LCG] Unable to get SURL of '" + path + "': " + cout);
                 throw new OperationException(cout);
             }
             process = null;
 
             return surls.toArray(new String[]{});
-
         } catch (InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);
@@ -777,24 +743,19 @@ public class LCGOperations {
         }
     }
 
-    /**
-     *
-     * @param proxy
-     * @param path
-     * @param guid
-     * @param surls
-     * @throws OperationException
-     */
-    private static void unregister(String proxy, String path, String guid,
-            String... surls) throws OperationException {
+    private static void unregister(
+        String proxy, String path, String guid, String... surls)
+        throws OperationException {
 
         try {
             logger.info("[LCG] Unregistering: " + path);
             for (String surl : surls) {
 
-                Process process = OperationsUtil.getProcess(proxy, "lcg-uf", "-v", guid, surl);
+                Process process = OperationsUtil.getProcess(
+                    proxy, "lcg-uf", "-v", guid, surl);
 
-                BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                BufferedReader r = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()));
                 String s = null;
                 String cout = "";
 
@@ -806,13 +767,13 @@ public class LCGOperations {
                 r.close();
 
                 if (process.exitValue() != 0) {
-                    logger.error("[LCG] Unable to unregister '" + path + "': " + cout);
+                    logger.error(
+                        "[LCG] Unable to unregister '" + path + "': " + cout);
                     throw new OperationException(cout);
                 }
                 process = null;
                 DAOFactory.getDAOFactory().getZombieFilesDAO().add(surl);
             }
-
         } catch (DAOException ex) {
             throw new OperationException(ex);
         } catch (InterruptedException ex) {
@@ -824,17 +785,22 @@ public class LCGOperations {
         }
     }
 
-    public static void setComment(String proxy, String lfn, String comment) throws OperationException {
-          try {
-            logger.info("[LCG] Setting comment of LFN '" + lfn + "' to '" + comment + "'.");
+    public void setComment(String proxy, String lfn, String comment)
+        throws OperationException {
+
+        try {
+            logger.info("[LCG] Setting comment of LFN '" + lfn +
+                        "' to '" + comment + "'.");
 
             if (!exists(proxy,lfn)) {
                 String message="[LCG] LFN " + lfn + " does not exist.";
                 logger.error(message);
                 throw new OperationException(message);
             }
-            Process process = OperationsUtil.getProcess(proxy, "lfc-setcomment", lfn, comment);
-            BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            Process process = OperationsUtil.getProcess(
+                proxy, "lfc-setcomment", lfn, comment);
+            BufferedReader r = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
             String s = null;
             String cout = "";
 
@@ -850,7 +816,6 @@ public class LCGOperations {
                 throw new OperationException(cout);
             }
             process = null;
-
         } catch (InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);

@@ -34,6 +34,8 @@
  */
 package fr.insalyon.creatis.grida.server;
 
+import fr.insalyon.creatis.grida.server.operation.LCGOperations;
+import fr.insalyon.creatis.grida.server.operation.Operations;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -61,7 +63,6 @@ public class Configuration {
     private String bdiiPort;
     private List<String> preferredSEsList;
     private List<String> failoverServers;
-    private boolean isLcgCommandsAvailable = false;
     // Cache
     private int cacheListMaxEntries;
     private int cacheListMaxHours;
@@ -73,6 +74,8 @@ public class Configuration {
     private int maxSimultaneousUploads;
     private int maxSimultaneousDeletes;
     private int maxSimultaneousReplications;
+
+    private Operations operations;
 
     public synchronized static Configuration getInstance() {
 
@@ -86,8 +89,8 @@ public class Configuration {
 
         loadConfigurationFile();
         createCachePath();
-        configureLcgCommands();
-        if (!isLcgCommandsAvailable) {
+        boolean isOneCommandConfigured = configureLcgCommands();
+        if (!isOneCommandConfigured) {
             System.exit(1);
         }
     }
@@ -155,40 +158,34 @@ public class Configuration {
         }
     }
 
-    private void configureLcgCommands() {
+    private boolean configureLcgCommands() {
+        boolean isLcgCommandsAvailable =
+            isBinaryAvailable("lcg-cr")
+            && isBinaryAvailable("lcg-cp");
+        if (isLcgCommandsAvailable) {
+            logger.info("LCG Commands available.");
+            operations = new LCGOperations();
+        } else {
+            logger.warn("LCG Commands unavailable.");
+        }
+        return isLcgCommandsAvailable;
+    }
 
+    private boolean isBinaryAvailable(String name) {
+        boolean isAvailable = false;
         try {
-            ProcessBuilder builder = new ProcessBuilder("which", "lcg-cr");
+            ProcessBuilder builder = new ProcessBuilder("which", name);
             builder.redirectErrorStream(true);
             Process process = builder.start();
             process.waitFor();
 
-            if (process.exitValue() == 0) {
-                isLcgCommandsAvailable = true;
-            } else {
-                logger.warn("LCG Commands unavailable.");
-                return;
-            }
-
-            builder = new ProcessBuilder("which", "lcg-cp");
-            builder.redirectErrorStream(true);
-            process = builder.start();
-            process.waitFor();
-
-            if (process.exitValue() != 0) {
-                isLcgCommandsAvailable = false;
-                logger.warn("LCG Commands unavailable.");
-            } else {
-                logger.info("LCG Commands available.");
-            }
-
+            isAvailable = process.exitValue() == 0;
         } catch (InterruptedException ex) {
-            logger.warn("LCG Commands unavailable.");
-            isLcgCommandsAvailable = false;
+            logger.warn(ex);
         } catch (IOException ex) {
-            logger.warn("LCG Commands unavailable.");
-            isLcgCommandsAvailable = false;
+            logger.warn(ex);
         }
+        return isAvailable;
     }
 
     public String getLfcHost() {
@@ -242,10 +239,6 @@ public class Configuration {
         return new File(cacheFilesPath).getAbsolutePath();
     }
 
-    public boolean isLcgCommandsAvailable() {
-        return isLcgCommandsAvailable;
-    }
-
     public String getVo() {
         return vo;
     }
@@ -272,5 +265,9 @@ public class Configuration {
 
     public int getMaxHistory() {
         return maxHistory;
+    }
+
+    public Operations getOperations() {
+        return operations;
     }
 }
