@@ -59,6 +59,7 @@ public class LCGOperations implements Operations {
 
     private final static Logger logger = Logger.getLogger(LCGOperations.class);
 
+    @Override
     public long getModificationDate(String proxy, String path)
         throws OperationException {
 
@@ -113,6 +114,7 @@ public class LCGOperations implements Operations {
         }
     }
 
+    @Override
     public List<GridData> listFilesAndFolders(
         String proxy, String path, boolean listComment)
         throws OperationException {
@@ -232,6 +234,7 @@ public class LCGOperations implements Operations {
         }
     }
 
+    @Override
     public String downloadFile(
         String operationID,
         String proxy,
@@ -287,6 +290,7 @@ public class LCGOperations implements Operations {
         }
     }
 
+    @Override
     public String uploadFile(
         String operationID,
         String proxy,
@@ -354,6 +358,7 @@ public class LCGOperations implements Operations {
         }
     }
 
+    @Override
     public void replicateFile(String proxy, String sourcePath)
         throws OperationException {
 
@@ -397,6 +402,7 @@ public class LCGOperations implements Operations {
         }
     }
 
+    @Override
     public boolean isDir(String proxy, String path) throws OperationException {
 
         try {
@@ -432,6 +438,7 @@ public class LCGOperations implements Operations {
         }
     }
 
+    @Override
     public void deleteFolder(String proxy, String path)
         throws OperationException {
 
@@ -480,6 +487,7 @@ public class LCGOperations implements Operations {
         }
     }
 
+    @Override
     public void deleteFile(String proxy, String path)
         throws OperationException {
 
@@ -533,6 +541,7 @@ public class LCGOperations implements Operations {
         }
     }
 
+    @Override
     public void createFolder(String proxy, String path)
         throws OperationException {
 
@@ -571,6 +580,7 @@ public class LCGOperations implements Operations {
         }
     }
 
+    @Override
     public void rename(String proxy, String oldPath, String newPath)
         throws OperationException {
 
@@ -612,6 +622,7 @@ public class LCGOperations implements Operations {
         }
     }
 
+    @Override
     public boolean exists(String proxy, String path) throws OperationException {
 
         try {
@@ -650,7 +661,7 @@ public class LCGOperations implements Operations {
         }
     }
 
-    /** Gets the size of a file or a directory. */
+    @Override
     public long getDataSize(String proxy, String path)
         throws OperationException {
 
@@ -785,6 +796,7 @@ public class LCGOperations implements Operations {
         }
     }
 
+    @Override
     public void setComment(String proxy, String lfn, String comment)
         throws OperationException {
 

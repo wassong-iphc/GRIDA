@@ -38,18 +38,21 @@ public interface Operations {
         throws OperationException;
 
     List<GridData> listFilesAndFolders(
-        String proxy, String path, boolean listComment /* exception (unimplemented) if true in vlet */)
+        String proxy, String path, boolean listComment /* only in lcg */)
         throws OperationException;
 
     String downloadFile(
-        String operationID /* unused in vlet */,
+        String operationID,
         String proxy,
         String localDirPath,
         String fileName,
         String remoteFilePath) throws OperationException;
 
+    /** Upload the file to the first SE where it works. If it doesn't work on a
+     *  SE, try the next one in the list that is configured.
+     */
     String uploadFile(
-        String operationID /* unused in vlet */,
+        String operationID,
         String proxy,
         String localFilePath,
         String remoteDir) throws OperationException;
@@ -70,6 +73,7 @@ public interface Operations {
 
     boolean exists(String proxy, String path) throws OperationException;
 
+    /** Gets the size of a file or a directory. */
     long getDataSize(String proxy, String path) throws OperationException;
 
     void setComment(String proxy, String lfn, String comment)
