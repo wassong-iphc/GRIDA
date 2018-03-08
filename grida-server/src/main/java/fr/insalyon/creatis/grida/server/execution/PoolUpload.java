@@ -45,6 +45,7 @@ import fr.insalyon.creatis.grida.server.dao.DAOFactory;
 import fr.insalyon.creatis.grida.server.dao.PoolDAO;
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
@@ -57,7 +58,8 @@ public class PoolUpload extends Thread {
     private static final Logger logger = Logger.getLogger(PoolUpload.class);
     private static PoolUpload instance;
     private PoolDAO poolDAO;
-    private static volatile int running = 0;
+    private static Semaphore counter = new Semaphore(
+        Configuration.getInstance().getMaxSimultaneousUploads());
 
     public synchronized static PoolUpload getInstance() {
         if (instance == null) {
@@ -80,16 +82,10 @@ public class PoolUpload extends Thread {
             while (!pendingOperations.isEmpty()) {
 
                 for (Operation operation : pendingOperations) {
-
-                    if (running < Configuration.getInstance().getMaxSimultaneousUploads()) {
-                        running++;
-                        logger.info("[Pool Upload] Processing operation '" + operation.getId() + "'");
-                        updateStatus(operation, Status.Running);
-                        new Upload(operation).start();
-
-                    } else {
-                        break;
-                    }
+                    counter.acquireUninterruptibly();
+                    logger.info("[Pool Upload] Processing operation '" + operation.getId() + "'");
+                    updateStatus(operation, Status.Running);
+                    new Upload(operation, counter).start();
                 }
                 pendingOperations = poolDAO.getUploadPendingOperations();
             }
@@ -108,10 +104,12 @@ public class PoolUpload extends Thread {
     class Upload extends Thread {
 
         private Operation operation;
+        private Semaphore counter;
 
-        public Upload(Operation operation) {
+        public Upload(Operation operation, Semaphore counter) {
 
             this.operation = operation;
+            this.counter = counter;
         }
 
         @Override
@@ -120,7 +118,7 @@ public class PoolUpload extends Thread {
             try {
                 OperationBusiness operationBusiness = new OperationBusiness(operation.getProxy());
 
-                String path = operationBusiness.uploadFile(operation.getId(), 
+                String path = operationBusiness.uploadFile(operation.getId(),
                         operation.getSource(), operation.getDest());
                 try {
                     new PoolBusiness().addOperation(operation.getProxy(), path, "",
@@ -137,8 +135,7 @@ public class PoolUpload extends Thread {
                 logger.error(ex);
                 retry();
             } finally {
-                running--;
-                PoolUpload.getInstance();
+                counter.release();
             }
         }
 
@@ -148,7 +145,7 @@ public class PoolUpload extends Thread {
                 if (operation.getRetrycount() == Configuration.getInstance().getMaxRetryCount()) {
                     updateStatus(operation, Status.Failed);
                     FileUtils.deleteQuietly(new File(operation.getSource()));
-                    
+
                 } else {
                     operation.incrementRetryCount();
                     updateStatus(operation, Status.Rescheduled);
