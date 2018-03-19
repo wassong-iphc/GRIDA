@@ -31,9 +31,14 @@
 package fr.insalyon.creatis.grida.client;
 
 import static fr.insalyon.creatis.grida.common.ExecutorConstants.*;
+import fr.insalyon.creatis.grida.common.bean.CachedFile;
 import fr.insalyon.creatis.grida.common.bean.GridData;
+import fr.insalyon.creatis.grida.common.bean.Operation;
+import fr.insalyon.creatis.grida.common.bean.ZombieFile;
 import java.io.File;
+import java.text.DateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -110,11 +115,30 @@ public class GRIDAClientMain {
         String commands =
             "\n" +
             "<command> is one of the following (case insensitive):\n" +
-            " getFile, getFolder, list, getModDate, upload," +
-            " uploadToSes, replicate, delete, createFolder, rename, exists," +
-            " setComment, listWithComment, cacheList, cacheDelete, poolAdd," +
-            " poolById, poolByUser, poolRemoveById, poolRemoveByUser," +
-            " poolAll, poolByDate, zombieGet, zombieDelete\n";
+            " getFile <remoteFile> <localDir>\n" +
+            " getFolder <remoteDir> <localDir>\n" +
+            " list <dir>\n" +
+            " getModDate <filename>\n" +
+            " upload <localFile> <remoteDir>\n" +
+            " uploadToSes <localFile> <remoteDir> <storageElement>\n" +
+            " replicate <remoteFile>\n" +
+            " delete <path to file or dir>\n" +
+            " createFolder <path>\n" +
+            " rename <oldPath> <newPath>\n" +
+            " exists <remotePath>\n" +
+            " setComment [lfn:]<path> <rev>\n" +
+            " listWithComment <dir>\n" +
+            " cacheList\n" +
+            " cacheDelete <path>\n" +
+            " poolAdd <localFile> <remoteDir> <user>\n" +
+            " poolById <id>\n" +
+            " poolByUser <user>\n" +
+            " poolRemoveById <id>\n" +
+            " poolRemoveByUser <user>\n" +
+            " poolAll\n" +
+            " poolByDate <user> <limit> <startDate>\n" +
+            " zombieGet\n" +
+            " zombieDelete <surl>\n";
 
         new HelpFormatter().printHelp(
             "gridaClient [options] <command> <args>",
@@ -126,16 +150,17 @@ public class GRIDAClientMain {
     private String executeCommand(ClientOptions options)
         throws GRIDAClientException {
 
-        System.out.println("host: " +  options.host);
-        System.out.println("port: " +  options.port);
-        System.out.println("proxy: " + options.proxy);
-
         if (!isNumberOfArgumentsCorrect(options)) {
             System.exit(1);
         }
 
+        // Both clients are used in many commands, so they are created
+        // globally.  Impact is low if they are finally not used.
         GRIDAClient client = new GRIDAClient(
             options.host, options.port, options.proxy);
+        GRIDAPoolClient poolClient = new GRIDAPoolClient(
+            options.host, options.port, options.proxy);
+
         String firstArg = options.cmdOptions[0];
 
         String result = "Done.";
@@ -185,41 +210,99 @@ public class GRIDAClientMain {
         case "listwithcomment":
             result = list(client, firstArg, true);
             break;
-            /*
         case "cachelist":
-            client.(firstArg, options.cmdOptions[1]);
-            break;
+        {
+            GRIDACacheClient cacheClient = new GRIDACacheClient(
+                options.host, options.port, options.proxy);
+            StringBuilder sb = new StringBuilder();
+            for (CachedFile cf: cacheClient.getCachedFiles()) {
+                sb.append(
+                    cf.getPath() + ' ' +
+                    cf.getName() + ' ' +
+                    cf.getSize() + ' ' +
+                    cf.getFrequency() + ' ' +
+                    cf.getLastUsage() +
+                    '\n');
+            }
+            result = sb.toString();
+        }
+        break;
         case "cachedelete":
-            client.(firstArg, options.cmdOptions[1]);
-            break;
+        {
+            GRIDACacheClient cacheClient = new GRIDACacheClient(
+                options.host, options.port, options.proxy);
+            cacheClient.deleteCachedFile(firstArg);
+        }
+        break;
         case "pooladd":
-            client.(firstArg, options.cmdOptions[1]);
+            result = poolClient.uploadFile(
+                firstArg, options.cmdOptions[1], options.cmdOptions[2]);
             break;
         case "poolbyid":
-            client.(firstArg, options.cmdOptions[1]);
+            result = poolClient.getOperationById(firstArg).toString();
             break;
         case "poolbyuser":
-            client.(firstArg, options.cmdOptions[1]);
-            break;
+        {
+            StringBuilder sb = new StringBuilder();
+            for (Operation op: poolClient.getOperationsListByUser(firstArg)) {
+                sb.append(op.toString()).append('\n');
+            }
+            result = sb.toString();
+        }
+        break;
         case "poolremovebyid":
-            client.(firstArg, options.cmdOptions[1]);
+            poolClient.removeOperationById(firstArg);
             break;
         case "poolremovebyuser":
-            client.(firstArg, options.cmdOptions[1]);
+            poolClient.removeOperationsByUser(firstArg);
             break;
         case "poolall":
-            client.(firstArg, options.cmdOptions[1]);
-            break;
+        {
+            StringBuilder sb = new StringBuilder();
+            for (Operation op: poolClient.getAllOperations()) {
+                sb.append(op.toString()).append('\n');
+            }
+            result = sb.toString();
+        }
+        break;
         case "poolbydate":
-            client.(firstArg, options.cmdOptions[1]);
-            break;
+        {
+            try {
+                StringBuilder sb = new StringBuilder();
+                Date date = DateFormat.getDateInstance().parse(
+                    options.cmdOptions[2]);
+                for (Operation op: poolClient.getOperationsLimitedListByUserAndDate(
+                         firstArg,
+                         Integer.parseInt(options.cmdOptions[1]),
+                         date)) {
+                    sb.append(op.toString()).append('\n');
+                }
+                result = sb.toString();
+            } catch (java.text.ParseException pe) {
+                result = "Wrong date format: " + options.cmdOptions[2];
+            }
+        }
+        break;
         case "zombieget":
-            client.(firstArg, options.cmdOptions[1]);
-            break;
+        {
+            GRIDAZombieClient zombieClient = new GRIDAZombieClient(
+                options.host, options.port, options.proxy);
+            StringBuilder sb = new StringBuilder();
+            for (ZombieFile zf: zombieClient.getList()) {
+                sb.append(zf.getSurl())
+                    .append(zf.getRegistration().toString())
+                    .append('\n');
+            }
+            result = sb.toString();
+        }
+        break;
         case "zombiedelete":
-            client.(firstArg, options.cmdOptions[1]);
-            break;
-            */
+        {
+            GRIDAZombieClient zombieClient = new GRIDAZombieClient(
+                options.host, options.port, options.proxy);
+            zombieClient.delete(firstArg);
+        }
+        break;
         default:
             System.err.println("Unknown command: " + options.command);
             System.exit(1);
@@ -272,20 +355,20 @@ public class GRIDAClientMain {
             1, // "delete",
             1, // "createfolder",
             2, // "rename",
-            10, // "exists",
-            10, // "setcomment",
-            10, // "listwithcomment",
-            10, // "cachelist",
-            10, // "cachedelete",
-            10, // "pooladd",
-            10, // "poolbyid",
-            10, // "poolbyuser",
-            10, // "poolremovebyid",
-            10, // "poolremovebyuser",
-            10, // "poolall",
-            10, // "poolbydate",
-            10, // "zombieget",
-            10, // "zombiedelete"
+            1, // "exists",
+            2, // "setcomment",
+            1, // "listwithcomment",
+            0, // "cachelist",
+            1, // "cachedelete",
+            3, // "pooladd",
+            1, // "poolbyid",
+            1, // "poolbyuser",
+            1, // "poolremovebyid",
+            1, // "poolremovebyuser",
+            0, // "poolall",
+            3, // "poolbydate",
+            0, // "zombieget",
+            1 // "zombiedelete"
         };
 
         if (commands.length != nbNeededArguments.length) {
@@ -330,6 +413,7 @@ public class GRIDAClientMain {
             if (withComment) {
                 sb.append(' ' + gd.getComment());
             }
+            sb.append('\n');
         }
         return sb.toString();
     }
