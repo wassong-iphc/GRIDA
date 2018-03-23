@@ -52,6 +52,8 @@ public class DiracOperations implements Operations {
 
     private final static Logger logger = Logger.getLogger(DiracOperations.class);
 
+    private final String bashrcPath;
+
     private static int INDEX_PERMISSION = 0;
     private static int INDEX_NB_LINKS = 1;
     private static int INDEX_OWNER = 2;
@@ -60,6 +62,10 @@ public class DiracOperations implements Operations {
     private static int INDEX_DATE = 5;
     private static int INDEX_TIME = 6;
     private static int INDEX_NAME = 7;
+
+    public DiracOperations(String bashrcPath) {
+        this.bashrcPath = bashrcPath;
+    }
 
     @Override
     public long getModificationDate(String proxy, String path)
@@ -95,8 +101,7 @@ public class DiracOperations implements Operations {
 
         logger.info("[dirac] Listing contents of: " + path);
         try {
-            Process process = OperationsUtil.getProcess(
-                proxy, "dls", "-l", path);
+            Process process = processFor(proxy, "dls", "-l", path);
 
             List<GridData> data = new ArrayList<GridData>();
 
@@ -104,10 +109,18 @@ public class DiracOperations implements Operations {
                      new InputStreamReader(process.getInputStream()))) {
                 String s = null;
                 String cout = "";
+                boolean isFirst = true;
 
                 while ((s = r.readLine()) != null) {
-                    cout += s + "\n";
-                    data.add(parseLine(s));
+                    if (isFirst) {
+                        // Skip first line, which is the name of the concerned
+                        // path for the dls command.  Other commands ignore
+                        // output, so this does not hurt.
+                        isFirst = false;
+                    } else {
+                        cout += s + "\n";
+                        data.add(parseLine(s));
+                    }
                 }
                 process.waitFor();
                 OperationsUtil.close(process);
@@ -127,7 +140,9 @@ public class DiracOperations implements Operations {
         }
     }
 
-    private GridData parseLine(String line) {
+    private GridData parseLine(String line)
+        throws OperationException {
+
         String[] tokens = line.split("\\s+");
 
         StringBuilder dataName = new StringBuilder();
@@ -142,7 +157,12 @@ public class DiracOperations implements Operations {
         }
 
         GridData data;
-        if (tokens[INDEX_PERMISSION].charAt(0) == 'd') {
+        if (tokens.length == 0 ||
+            tokens[INDEX_PERMISSION].length() == 0) {
+            logger.error("Cannot extract permissions from line: " + line);
+            throw new OperationException(
+                "Cannot extract permissions from line: " + line);
+        } else if (tokens[INDEX_PERMISSION].charAt(0) == 'd') {
             data = new GridData(
                 dataName.toString(),
                 GridData.Type.Folder,
@@ -151,7 +171,8 @@ public class DiracOperations implements Operations {
             String modifTime = "unknown";
             if (tokens.length < INDEX_NAME) {
                 logger.warn(
-                    "Cannot get modification time; setting it to \"unknown\".");
+                    "Cannot get modification time; setting it to \"unknown\"." +
+                    "Line: " + line);
             } else {
                 modifTime = tokens[INDEX_DATE] + " " + tokens[INDEX_TIME];
             }
@@ -198,7 +219,7 @@ public class DiracOperations implements Operations {
             logger.info("[dirac] Downloading: " + remoteFilePath +
                         " - To: " + localDirPath);
 
-            Process process = OperationsUtil.getProcess(
+            Process process = processFor(
                 proxy, "dget", remoteFilePath, localDirPath);
 
             PoolProcessManager.getInstance().addProcess(operationID, process);
@@ -246,35 +267,26 @@ public class DiracOperations implements Operations {
             logger.info("[dirac] Uploading file: " + localFilePath +
                         " - To: " + remoteDir);
 
-            for (String se : Configuration.getInstance().getPreferredSEs()) {
-                Process process = OperationsUtil.getProcess(
-                    proxy, "dput", "-D", se, localFilePath, remoteDir);
+            List<String> ses = Configuration.getInstance().getPreferredSEs();
+            logger.info("[dirac] Uploading preferred SE: " + ses);
 
-                PoolProcessManager.getInstance()
-                    .addProcess(operationID, process);
+            if (ses.size() == 0) {
+                // Use the default SE
+                Process process = processFor(
+                    proxy, "dput", localFilePath, remoteDir);
+                completed = uploadToSe(operationID, process);
+            } else {
+                for (String se : ses) {
+                    Process process = processFor(
+                        proxy, "dput", "-D", se, localFilePath, remoteDir);
 
-                try (BufferedReader r = new BufferedReader(
-                         new InputStreamReader(process.getInputStream()))) {
-                    String s = null;
-                    String cout = "";
-
-                    while ((s = r.readLine()) != null) {
-                        cout += s + "\n";
-                    }
-                    process.waitFor();
-                    OperationsUtil.close(process);
-
-                    if (process.exitValue() != 0) {
-                        logger.error(cout);
-                        PoolProcessManager.getInstance()
-                            .removeProcess(operationID);
-                    } else {
-                        completed = true;
-                        break;
-                    }
+                    logger.info("[dirac] Uploading file to se: " + se);
+                    completed = uploadToSe(operationID, process);
+                    if (completed) break;
                 }
-                process = null;
             }
+
+            logger.info("[dirac] Uploading completed: " + completed);
 
             if (!completed) {
                 throw new OperationException(
@@ -308,18 +320,26 @@ public class DiracOperations implements Operations {
 
     @Override
     public boolean isDir(String proxy, String path) throws OperationException {
-        String[] output = executeCommand(
-            proxy,
-            "Unable verify data for '" + path,
-            "dls", "-l", path);
-        return output[INDEX_PERMISSION].startsWith("d");
+        // Listing a directory returns the its content, and gives no information
+        // about the directory itself.  So we list the parent directory, extract
+        // the info of the file/folder we are interested in.
+        File f = new File(path);
+        String name = f.getName();
+
+        List<GridData> gdl = listFilesAndFolders(proxy, f.getParent(), false);
+        for (GridData gd : gdl) {
+            if (gd.getName().equals(name)) {
+                return gd.getPermissions().startsWith("d");
+            }
+        }
+        throw new OperationException("[dirac] isDir : Path not found : " + path);
     }
 
     @Override
     public void deleteFolder(String proxy, String path)
         throws OperationException {
 
-        logger.info("[grida] Deleting folder '" + path + "'.");
+        logger.info("[dirac] Deleting folder '" + path + "'.");
         executeCommand(
             proxy,
             "Unable to delete folder '" + path,
@@ -330,7 +350,7 @@ public class DiracOperations implements Operations {
     public void deleteFile(String proxy, String path)
         throws OperationException {
 
-        logger.info("[grida] Deleting file '" + path + "'");
+        logger.info("[dirac] Deleting file '" + path + "'");
         executeCommand(
             proxy,
             "Unable to delete file '" + path,
@@ -341,7 +361,7 @@ public class DiracOperations implements Operations {
     public void createFolder(String proxy, String path)
         throws OperationException {
 
-        logger.info("[grida] Creating folder '" + path + "'");
+        logger.info("[dirac] Creating folder '" + path + "'");
         executeCommand(
             proxy,
             "Unable to create folder '" + path,
@@ -361,7 +381,7 @@ public class DiracOperations implements Operations {
 
     @Override
     public boolean exists(String proxy, String path) throws OperationException {
-        logger.info("[grida] Checking existence of '" + path + "'");
+        logger.info("[dirac] Checking existence of '" + path + "'");
         String[] output = executeCommand(
             proxy,
             "Unable to verify existence for '" + path,
@@ -395,12 +415,24 @@ public class DiracOperations implements Operations {
         throw new OperationException(error);
     }
 
+    private Process processFor(String proxy, String... command)
+        throws IOException {
+
+        StringBuilder sb = new StringBuilder("source ")
+            .append(bashrcPath).append(";");
+        for (String s : command) {
+            sb.append(" ").append(s);
+        }
+
+        return OperationsUtil.getProcess(proxy, "bash", "-c", sb.toString());
+    }
+
     private String[] executeCommand(
         String proxy, String errorMessage, String... arguments)
         throws OperationException {
 
         try {
-            Process process = OperationsUtil.getProcess(proxy, arguments);
+            Process process = processFor(proxy, arguments);
             String cout = "";
             try (BufferedReader r = new BufferedReader(
                      new InputStreamReader(process.getInputStream()))) {
@@ -431,5 +463,31 @@ public class DiracOperations implements Operations {
             logger.error(ex);
             throw new OperationException(ex);
         }
+    }
+
+    private boolean uploadToSe(String operationID, Process process)
+        throws InterruptedException, IOException {
+        PoolProcessManager.getInstance().addProcess(operationID, process);
+
+        boolean completed = false;
+        try (BufferedReader r = new BufferedReader(
+                 new InputStreamReader(process.getInputStream()))) {
+            String s = null;
+            String cout = "";
+
+            while ((s = r.readLine()) != null) {
+                cout += s + "\n";
+            }
+            process.waitFor();
+            OperationsUtil.close(process);
+
+            if (process.exitValue() != 0) {
+                logger.error(cout);
+                PoolProcessManager.getInstance().removeProcess(operationID);
+            } else {
+                completed = true;
+            }
+        }
+        return completed;
     }
 }

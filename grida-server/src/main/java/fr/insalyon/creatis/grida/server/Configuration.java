@@ -34,6 +34,7 @@
  */
 package fr.insalyon.creatis.grida.server;
 
+import fr.insalyon.creatis.grida.server.operation.DiracOperations;
 import fr.insalyon.creatis.grida.server.operation.LCGOperations;
 import fr.insalyon.creatis.grida.server.operation.Operations;
 import java.io.File;
@@ -75,6 +76,8 @@ public class Configuration {
     private int maxSimultaneousDeletes;
     private int maxSimultaneousReplications;
 
+    private String commandsType;
+    private String diracBashrc;
     private Operations operations;
 
     public synchronized static Configuration getInstance() {
@@ -86,10 +89,49 @@ public class Configuration {
     }
 
     private Configuration() {
+        boolean isOneCommandConfigured = false;
 
         loadConfigurationFile();
         createCachePath();
-        boolean isOneCommandConfigured = configureLcgCommands();
+        switch (commandsType) {
+        case "lcg":
+        {
+            boolean isLcgCommandsAvailable =
+                isBinaryAvailable("lcg-cr", null)
+                && isBinaryAvailable("lcg-cp", null);
+            if (isLcgCommandsAvailable) {
+                logger.info("LCG commands available.");
+                isOneCommandConfigured = true;
+                operations = new LCGOperations();
+            } else {
+                logger.warn("LCG commands unavailable.");
+            }
+        }
+        break;
+        case "dirac":
+        {
+            boolean exists = new File(diracBashrc).exists();
+            if (!exists) {
+                logger.warn("Dirac bashrc file does not exist: " + diracBashrc);
+            }
+            boolean isDiracCommandsAvailable =
+                exists
+                && isBinaryAvailable("dls", diracBashrc)
+                && isBinaryAvailable("dget", diracBashrc);
+            if (isDiracCommandsAvailable) {
+                logger.info("Dirac commands available.");
+                isOneCommandConfigured = true;
+                operations = new DiracOperations(diracBashrc);
+            } else {
+                logger.warn("Dirac commands unavailable.");
+            }
+        }
+        break;
+        default:
+            logger.error("Unkown command type: " + commandsType +
+                         ". Possible values are lcg or dirac.");
+            break;
+        }
         if (!isOneCommandConfigured) {
             System.exit(1);
         }
@@ -120,6 +162,9 @@ public class Configuration {
             maxSimultaneousReplications = config.getInt(Constants.LAB_POOL_MAX_REPLICATION, 5);
             maxHistory = config.getInt(Constants.LAB_POOL_MAX_HISTORY, 120);
 
+            commandsType = config.getString(Constants.LAB_COMMANDS_TYPE, "lcg");
+            diracBashrc = config.getString(Constants.LAB_DIRAC_BASHRC, "needed_if_commands.type_is_dirac");
+
             config.setProperty(Constants.LAB_AGENT_PORT, port);
             config.setProperty(Constants.LAB_AGENT_RETRYCOUNT, maxRetryCount);
             config.setProperty(Constants.LAB_AGENT_MIN_AVAILABLE_DISKSPACE, minAvailableDiskSpace);
@@ -138,6 +183,8 @@ public class Configuration {
             config.setProperty(Constants.LAB_POOL_MAX_DELETE, maxSimultaneousDeletes);
             config.setProperty(Constants.LAB_POOL_MAX_REPLICATION, maxSimultaneousReplications);
             config.setProperty(Constants.LAB_POOL_MAX_HISTORY, maxHistory);
+            config.setProperty(Constants.LAB_COMMANDS_TYPE, commandsType);
+            config.setProperty(Constants.LAB_DIRAC_BASHRC, diracBashrc);
 
             config.save();
 
@@ -158,23 +205,17 @@ public class Configuration {
         }
     }
 
-    private boolean configureLcgCommands() {
-        boolean isLcgCommandsAvailable =
-            isBinaryAvailable("lcg-cr")
-            && isBinaryAvailable("lcg-cp");
-        if (isLcgCommandsAvailable) {
-            logger.info("LCG Commands available.");
-            operations = new LCGOperations();
-        } else {
-            logger.warn("LCG Commands unavailable.");
-        }
-        return isLcgCommandsAvailable;
-    }
-
-    private boolean isBinaryAvailable(String name) {
+    private boolean isBinaryAvailable(String name, String envFile) {
         boolean isAvailable = false;
         try {
-            ProcessBuilder builder = new ProcessBuilder("which", name);
+            String command = envFile == null
+                ? "which"
+                : "source " + envFile + "; which";
+
+            ProcessBuilder builder = envFile == null
+                ? new ProcessBuilder("which", name)
+                : new ProcessBuilder(
+                    "bash", "-c", "source " + envFile + "; which " + name);
             builder.redirectErrorStream(true);
             Process process = builder.start();
             process.waitFor();

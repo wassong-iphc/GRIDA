@@ -59,4 +59,6 @@ public class Constants {
     public static final String LAB_POOL_MAX_REPLICATION = "pool.max.replication";
     public static final String LAB_POOL_MAX_UPLOAD = "pool.max.upload";
     public static final String LAB_VO = "vo";
+    public static final String LAB_COMMANDS_TYPE = "commands.type";
+    public static final String LAB_DIRAC_BASHRC = "dirac.bashrc";
 }

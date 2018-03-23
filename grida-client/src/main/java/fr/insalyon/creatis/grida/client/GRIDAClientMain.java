@@ -30,6 +30,10 @@
  */
 package fr.insalyon.creatis.grida.client;
 
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.io.IOException;
+
 import static fr.insalyon.creatis.grida.common.ExecutorConstants.*;
 import fr.insalyon.creatis.grida.common.bean.CachedFile;
 import fr.insalyon.creatis.grida.common.bean.GridData;
@@ -53,7 +57,8 @@ public class GRIDAClientMain {
         ClientOptions options = main.handleArgs(args);
 
         try {
-            main.executeCommand(options);
+            String result = main.executeCommand(options);
+            System.out.println(result);
         } catch (GRIDAClientException gce) {
             gce.printStackTrace(System.err);
         }
@@ -65,7 +70,7 @@ public class GRIDAClientMain {
         options.addOption(
             "h", "host", true, "host of the server (default localhost)");
         options.addOption(
-            "p", "port", true, "port of the server (default 5006)");
+            "p", "port", true, "port of the server (default 9006)");
         options.addOption(
             "r",
             "proxy",
@@ -78,7 +83,7 @@ public class GRIDAClientMain {
             CommandLine cmd = parser.parse(options, args);
 
             String host = cmd.getOptionValue('h', "localhost");
-            int port = Integer.parseInt(cmd.getOptionValue('p', "5006"));
+            int port = Integer.parseInt(cmd.getOptionValue('p', "9006"));
             String proxy = cmd.getOptionValue(
                 'r', System.getenv("X509_USER_PROXY"));
 
@@ -117,7 +122,7 @@ public class GRIDAClientMain {
             "<command> is one of the following (case insensitive):\n" +
             " getFile <remoteFile> <localDir>\n" +
             " getFolder <remoteDir> <localDir>\n" +
-            " list <dir>\n" +
+            " list <dir> <1 if refresh, or else 0>\n" +
             " getModDate <filename>\n" +
             " upload <localFile> <remoteDir>\n" +
             " uploadToSes <localFile> <remoteDir> <storageElement>\n" +
@@ -127,7 +132,7 @@ public class GRIDAClientMain {
             " rename <oldPath> <newPath>\n" +
             " exists <remotePath>\n" +
             " setComment [lfn:]<path> <rev>\n" +
-            " listWithComment <dir>\n" +
+            " listWithComment <dir> <1 if refresh, or else 0>\n" +
             " cacheList\n" +
             " cacheDelete <path>\n" +
             " poolAdd <localFile> <remoteDir> <user>\n" +
@@ -161,7 +166,9 @@ public class GRIDAClientMain {
         GRIDAPoolClient poolClient = new GRIDAPoolClient(
             options.host, options.port, options.proxy);
 
-        String firstArg = options.cmdOptions[0];
+        String firstArg = options.cmdOptions.length == 0
+            ? null
+            : options.cmdOptions[0];
 
         String result = "Done.";
         switch (options.command.toLowerCase()) {
@@ -172,8 +179,11 @@ public class GRIDAClientMain {
             result = client.getRemoteFolder(firstArg, options.cmdOptions[1]);
             break;
         case "list":
-            result = list(client, firstArg, false);
-            break;
+        {
+            boolean refresh = options.cmdOptions[1].equals("1");
+            result = list(client, firstArg, refresh, false);
+        }
+        break;
         case "getmoddate":
             result = Long.toString(client.getModificationDate(firstArg));
             break;
@@ -208,8 +218,11 @@ public class GRIDAClientMain {
             client.setComment(firstArg, options.cmdOptions[1]);
             break;
         case "listwithcomment":
-            result = list(client, firstArg, true);
-            break;
+        {
+            boolean refresh = options.cmdOptions[1].equals("1");
+            result = list(client, firstArg, refresh, true);
+        }
+        break;
         case "cachelist":
         {
             GRIDACacheClient cacheClient = new GRIDACacheClient(
@@ -347,7 +360,7 @@ public class GRIDAClientMain {
         int[] nbNeededArguments = {
             2, // "getfile",
             2, // "getfolder",
-            1, // "list",
+            2, // "list",
             1, // "getmoddate",
             2, // "upload",
             3, // "uploadtoses",
@@ -357,7 +370,7 @@ public class GRIDAClientMain {
             2, // "rename",
             1, // "exists",
             2, // "setcomment",
-            1, // "listwithcomment",
+            2, // "listwithcomment",
             0, // "cachelist",
             1, // "cachedelete",
             3, // "pooladd",
@@ -399,10 +412,11 @@ public class GRIDAClientMain {
         return false;
     }
 
-    private String list(GRIDAClient client, String dir, boolean withComment)
+    private String list(
+        GRIDAClient client, String dir, boolean refresh, boolean withComment)
         throws GRIDAClientException {
         StringBuilder sb = new StringBuilder();
-        for (GridData gd: client.getFolderData(dir, false)) {
+        for (GridData gd: client.getFolderData(dir, refresh)) {
             sb.append(
                 gd.getName() + ' ' +
                 gd.getType() + ' ' +
