@@ -8,6 +8,40 @@ Grida is mainly a server, than can receive requests to interact with a
 file catalog.  It is for example able to upload, download, or list
 files from a LCG or Dirac file catalog.
 
+### Server configuration
+
+The default configuration for the server is:
+```
+agent.port = 9006
+agent.retrycount = 5
+agent.min.available.diskspace = 0.1
+lfc.host = lfc-biomed.in2p3.fr
+vo = biomed
+bdii.host = cclcgtopbdii02.in2p3.fr
+bdii.port = 2170
+cache.list.max.entries = 30
+cache.list.max.hours = 12
+cache.files.max.size = 100.0
+cache.files.path = .cache
+pool.max.download = 10
+pool.max.upload = 10
+pool.max.delete = 5
+pool.max.replication = 5
+pool.max.history = 120
+commands.type = lcg
+dirac.bashrc = needed_if_commands.type_is_dirac
+```
+
+To the above list, must be added 2 entries which are empty by default
+(thus not shown):
+- the preferred SE list, named `lfc.preferredSEsList`.
+- the failover servers list, named `failover.servers`.
+
+The accepted values for `commands.type` are `lcg` and `dirac`.  If the
+value is `dirac`, then the entry `dirac.bashrc` must be set to the
+path of the `bashrc` of the dirac installation.
+
+
 ## Client
 
 The client is a library than can be embeded into a Java program.
