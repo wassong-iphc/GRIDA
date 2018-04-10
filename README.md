@@ -39,7 +39,9 @@ To the above list, must be added 2 entries which are empty by default
 
 The accepted values for `commands.type` are `lcg` and `dirac`.  If the
 value is `dirac`, then the entry `dirac.bashrc` must be set to the
-path of the `bashrc` of the dirac installation.
+path of the `bashrc` of the dirac installation.  The dirac
+installation must include `COMDIRAC`, as its commands are used in this
+case.
 
 
 ## Client
