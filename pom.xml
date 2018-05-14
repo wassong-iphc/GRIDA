@@ -8,7 +8,7 @@
     <name>GRIDA</name>
     <description>GRID data manager Agent</description>
     <inceptionYear>2011</inceptionYear>
-    <url>http://vip.creatis.insa-lyon.fr:9002/projects/vletagent</url>
+    <url>https://github.com/virtual-imaging-platform/GRIDA</url>
 
     <licenses>
         <license>
@@ -23,27 +23,35 @@
         <url>http://www.creatis.insa-lyon.fr/</url>
     </organization>
 
-    <developers>
-        <developer>
-            <id>silva</id>
-            <name>Rafael FERREIRA DA SILVA</name>
-            <email>rafael.silva@creatis.insa-lyon.fr</email>
-            <url>http://www.rafaelsilva.com/</url>
-            <organization>Centre National de la Recherche Scientifique</organization>
-            <organizationUrl>http://www.cnrs.fr/</organizationUrl>
-            <timezone>1</timezone>
-        </developer>
-    </developers>
-
     <modules>
         <module>grida-common</module>
         <module>grida-client</module>
         <module>grida-server</module>
     </modules>
 
-    <scm>
-        <connection>scm:svn:https://svn.creatis.insa-lyon.fr/svn/vip/GRIDA</connection>
-        <developerConnection>scm:svn:https://svn.creatis.insa-lyon.fr/svn/vip/GRIDA</developerConnection>
-        <url>http://vip.creatis.insa-lyon.fr:9002/projects/vletagent</url>
-    </scm>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>creatis-thirdyparty</id>
+            <name>Creatis Insa Lyon repository [creatis]</name>
+            <url>http://vip.creatis.insa-lyon.fr:9007/nexus/content/repositories/thirdparty</url>
+        </repository>
+    </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>creatis-releases</id>
+            <url>http://vip.creatis.insa-lyon.fr:9007/nexus/content/repositories/releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>creatis-snapshots</id>
+            <name>Internal Snapshots</name>
+            <url>http://vip.creatis.insa-lyon.fr:9007/nexus/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>
