@@ -37,9 +37,8 @@ package fr.insalyon.creatis.grida.server.business;
 import fr.insalyon.creatis.devtools.zip.FolderZipper;
 import fr.insalyon.creatis.grida.common.bean.GridData;
 import fr.insalyon.creatis.grida.server.Configuration;
-import fr.insalyon.creatis.grida.server.operation.LCGOperations;
+import fr.insalyon.creatis.grida.server.operation.Operations;
 import fr.insalyon.creatis.grida.server.operation.OperationException;
-import fr.insalyon.creatis.grida.server.operation.VletOperations;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -50,19 +49,20 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
 /**
- *
  * @author Rafael Ferreira da Silva
  */
 public class OperationBusiness {
 
-    private static final Logger logger = Logger.getLogger(OperationBusiness.class);
+    private static final Logger logger =
+        Logger.getLogger(OperationBusiness.class);
     private Configuration configuration;
     private String proxy;
+    private Operations operations;
 
     public OperationBusiness(String proxy) {
-
         this.proxy = proxy;
         configuration = Configuration.getInstance();
+        operations = configuration.getOperations();
     }
 
     /**
@@ -74,12 +74,7 @@ public class OperationBusiness {
     public long getModificationDate(String path) throws BusinessException {
 
         try {
-            if (configuration.isLcgCommandsAvailable()) {
-                return LCGOperations.getModificationDate(proxy, path);
-
-            } else {
-                return VletOperations.getModificationDate(proxy, path);
-            }
+            return operations.getModificationDate(proxy, path);
         } catch (OperationException ex) {
             throw new BusinessException(ex);
         }
@@ -91,22 +86,16 @@ public class OperationBusiness {
      * @return
      * @throws BusinessException
      */
-    public List<GridData> listFilesAndFolders(String path, boolean listComments) throws BusinessException {
+    public List<GridData> listFilesAndFolders(String path, boolean listComments)
+        throws BusinessException {
 
         try {
-            if (configuration.isLcgCommandsAvailable()) {
-                return LCGOperations.listFilesAndFolders(proxy, path,listComments);
-
-            } else {
-                if(listComments)
-                    throw new BusinessException("Listing of file comments not implemented in VLET");
-                return VletOperations.listFilesAndFolders(proxy, path);
-            }
+            return operations.listFilesAndFolders(proxy, path, listComments);
         } catch (OperationException ex) {
             throw new BusinessException(ex);
         }
     }
-    
+
     /**
      * Downloads a remote file to a local folder.
      *
@@ -133,13 +122,8 @@ public class OperationBusiness {
                 return destFile.getAbsolutePath();
 
             } else {
-                if (configuration.isLcgCommandsAvailable()) {
-                    return LCGOperations.downloadFile(operationID, proxy,
-                            localDirPath, fileName, remoteFilePath);
-                } else {
-                    return VletOperations.downloadFile(proxy, localDir,
-                            fileName, remoteFilePath);
-                }
+                return operations.downloadFile(
+                    operationID, proxy, localDirPath, fileName, remoteFilePath);
             }
         } catch (OperationException ex) {
             throw new BusinessException(ex);
@@ -257,16 +241,12 @@ public class OperationBusiness {
      * @return
      * @throws BusinessException
      */
-    public String uploadFile(String operationID, String localFilePath, 
+    public String uploadFile(String operationID, String localFilePath,
             String remoteDir) throws BusinessException {
 
         try {
-            if (configuration.isLcgCommandsAvailable()) {
-                return LCGOperations.uploadFile(operationID, proxy, localFilePath, remoteDir);
-
-            } else {
-                return VletOperations.uploadFile(proxy, localFilePath, remoteDir);
-            }
+            return operations.uploadFile(
+                operationID, proxy, localFilePath, remoteDir);
         } catch (OperationException ex) {
             throw new BusinessException(ex);
         }
@@ -281,11 +261,7 @@ public class OperationBusiness {
     public void replicateFile(String sourcePath) throws BusinessException {
 
         try {
-            if (configuration.isLcgCommandsAvailable()) {
-                LCGOperations.replicateFile(proxy, sourcePath);
-            } else {
-                VletOperations.replicateFile(proxy, sourcePath);
-            }
+            operations.replicateFile(proxy, sourcePath);
         } catch (OperationException ex) {
             throw new BusinessException(ex);
         }
@@ -301,18 +277,10 @@ public class OperationBusiness {
     public void delete(String path) throws BusinessException {
 
         try {
-            if (configuration.isLcgCommandsAvailable()) {
-                if (LCGOperations.isDir(proxy, path)) {
-                    LCGOperations.deleteFolder(proxy, path);
-                } else {
-                    LCGOperations.deleteFile(proxy, path);
-                }
+            if (operations.isDir(proxy, path)) {
+                operations.deleteFolder(proxy, path);
             } else {
-                if (VletOperations.isDir(proxy, path)) {
-                    VletOperations.deleteFolder(proxy, path);
-                } else {
-                    VletOperations.deleteFile(proxy, path);
-                }
+                operations.deleteFile(proxy, path);
             }
         } catch (OperationException ex) {
             throw new BusinessException(ex);
@@ -328,11 +296,7 @@ public class OperationBusiness {
     public void createFolder(String newFolder) throws BusinessException {
 
         try {
-            if (configuration.isLcgCommandsAvailable()) {
-                LCGOperations.createFolder(proxy, newFolder);
-            } else {
-                VletOperations.createFolder(proxy, newFolder);
-            }
+            operations.createFolder(proxy, newFolder);
         } catch (OperationException ex) {
             throw new BusinessException(ex);
         }
@@ -347,11 +311,7 @@ public class OperationBusiness {
     public void rename(String oldPath, String newPath) throws BusinessException {
 
         try {
-            if (configuration.isLcgCommandsAvailable()) {
-                LCGOperations.rename(proxy, oldPath, newPath);
-            } else {
-                VletOperations.rename(proxy, oldPath, newPath);
-            }
+            operations.rename(proxy, oldPath, newPath);
         } catch (OperationException ex) {
             throw new BusinessException(ex);
         }
@@ -367,11 +327,7 @@ public class OperationBusiness {
 
         try {
             logger.info("Verifying existence of '" + path + "'.");
-            if (configuration.isLcgCommandsAvailable()) {
-                return LCGOperations.exists(proxy, path);
-            } else {
-                return VletOperations.exist(proxy, path);
-            }
+            return operations.exists(proxy, path);
         } catch (OperationException ex) {
             throw new BusinessException(ex);
         }
@@ -386,11 +342,7 @@ public class OperationBusiness {
     public boolean isFolder(String path) throws BusinessException {
 
         try {
-            if (configuration.isLcgCommandsAvailable()) {
-                return LCGOperations.isDir(proxy, path);
-            } else {
-                return VletOperations.isDir(proxy, path);
-            }
+            return operations.isDir(proxy, path);
         } catch (OperationException ex) {
             throw new BusinessException(ex);
         }
@@ -398,20 +350,15 @@ public class OperationBusiness {
 
     /**
      * Gets the size of a file or directory.
-     * 
+     *
      * @param path
      * @return
-     * @throws BusinessException 
+     * @throws BusinessException
      */
     public long getDataSize(String path) throws BusinessException {
 
         try {
-            if (configuration.isLcgCommandsAvailable()) {
-                return LCGOperations.getDataSize(proxy, path);
-            } else {
-                return VletOperations.getDataSize(proxy, path);
-            }
-
+            return operations.getDataSize(proxy, path);
         } catch (OperationException ex) {
             throw new BusinessException(ex);
         }
@@ -439,14 +386,9 @@ public class OperationBusiness {
     }
 
     public void setComment(String lfn, String comment) throws BusinessException {
-        try{
-     
-            if (configuration.isLcgCommandsAvailable()) {
-                LCGOperations.setComment(proxy, lfn, comment);
-            } else {
-                VletOperations.setComment(proxy, lfn,comment);
-            }
-        }catch(OperationException e){
+        try {
+            operations.setComment(proxy, lfn, comment);
+        } catch(OperationException e) {
             throw new BusinessException(e);
         }
     }

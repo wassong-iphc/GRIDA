@@ -34,13 +34,13 @@
  */
 package fr.insalyon.creatis.grida.server;
 
+import fr.insalyon.creatis.grida.server.operation.DiracOperations;
+import fr.insalyon.creatis.grida.server.operation.LCGOperations;
+import fr.insalyon.creatis.grida.server.operation.Operations;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import nl.uva.vlet.GlobalConfig;
-import nl.uva.vlet.vfs.VFSClient;
-import nl.uva.vlet.vrs.VRSContext;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.Logger;
@@ -64,7 +64,6 @@ public class Configuration {
     private String bdiiPort;
     private List<String> preferredSEsList;
     private List<String> failoverServers;
-    private boolean isLcgCommandsAvailable = false;
     // Cache
     private int cacheListMaxEntries;
     private int cacheListMaxHours;
@@ -76,9 +75,10 @@ public class Configuration {
     private int maxSimultaneousUploads;
     private int maxSimultaneousDeletes;
     private int maxSimultaneousReplications;
-    // Vlet
-    private VRSContext vrsContext;
-    private VFSClient vfsClient;
+
+    private String commandsType;
+    private String diracBashrc;
+    private Operations operations;
 
     public synchronized static Configuration getInstance() {
 
@@ -89,12 +89,51 @@ public class Configuration {
     }
 
     private Configuration() {
+        boolean isOneCommandConfigured = false;
 
         loadConfigurationFile();
         createCachePath();
-        configureLcgCommands();
-        if (!isLcgCommandsAvailable) {
-            configureVlet();
+        switch (commandsType) {
+        case "lcg":
+        {
+            boolean isLcgCommandsAvailable =
+                isBinaryAvailable("lcg-cr", null)
+                && isBinaryAvailable("lcg-cp", null);
+            if (isLcgCommandsAvailable) {
+                logger.info("LCG commands available.");
+                isOneCommandConfigured = true;
+                operations = new LCGOperations();
+            } else {
+                logger.warn("LCG commands unavailable.");
+            }
+        }
+        break;
+        case "dirac":
+        {
+            boolean exists = new File(diracBashrc).exists();
+            if (!exists) {
+                logger.warn("Dirac bashrc file does not exist: " + diracBashrc);
+            }
+            boolean isDiracCommandsAvailable =
+                exists
+                && isBinaryAvailable("dls", diracBashrc)
+                && isBinaryAvailable("dget", diracBashrc);
+            if (isDiracCommandsAvailable) {
+                logger.info("Dirac commands available.");
+                isOneCommandConfigured = true;
+                operations = new DiracOperations(diracBashrc);
+            } else {
+                logger.warn("Dirac commands unavailable.");
+            }
+        }
+        break;
+        default:
+            logger.error("Unkown command type: " + commandsType +
+                         ". Possible values are lcg or dirac.");
+            break;
+        }
+        if (!isOneCommandConfigured) {
+            System.exit(1);
         }
     }
 
@@ -123,6 +162,9 @@ public class Configuration {
             maxSimultaneousReplications = config.getInt(Constants.LAB_POOL_MAX_REPLICATION, 5);
             maxHistory = config.getInt(Constants.LAB_POOL_MAX_HISTORY, 120);
 
+            commandsType = config.getString(Constants.LAB_COMMANDS_TYPE, "lcg");
+            diracBashrc = config.getString(Constants.LAB_DIRAC_BASHRC, "needed_if_commands.type_is_dirac");
+
             config.setProperty(Constants.LAB_AGENT_PORT, port);
             config.setProperty(Constants.LAB_AGENT_RETRYCOUNT, maxRetryCount);
             config.setProperty(Constants.LAB_AGENT_MIN_AVAILABLE_DISKSPACE, minAvailableDiskSpace);
@@ -141,6 +183,8 @@ public class Configuration {
             config.setProperty(Constants.LAB_POOL_MAX_DELETE, maxSimultaneousDeletes);
             config.setProperty(Constants.LAB_POOL_MAX_REPLICATION, maxSimultaneousReplications);
             config.setProperty(Constants.LAB_POOL_MAX_HISTORY, maxHistory);
+            config.setProperty(Constants.LAB_COMMANDS_TYPE, commandsType);
+            config.setProperty(Constants.LAB_DIRAC_BASHRC, diracBashrc);
 
             config.save();
 
@@ -161,71 +205,28 @@ public class Configuration {
         }
     }
 
-    private void configureLcgCommands() {
-
+    private boolean isBinaryAvailable(String name, String envFile) {
+        boolean isAvailable = false;
         try {
-            ProcessBuilder builder = new ProcessBuilder("which", "lcg-cr");
+            String command = envFile == null
+                ? "which"
+                : "source " + envFile + "; which";
+
+            ProcessBuilder builder = envFile == null
+                ? new ProcessBuilder("which", name)
+                : new ProcessBuilder(
+                    "bash", "-c", "source " + envFile + "; which " + name);
             builder.redirectErrorStream(true);
             Process process = builder.start();
             process.waitFor();
 
-            if (process.exitValue() == 0) {
-                isLcgCommandsAvailable = true;
-            } else {
-                logger.warn("LCG Commands unavailable.");
-                return;
-            }
-
-            builder = new ProcessBuilder("which", "lcg-cp");
-            builder.redirectErrorStream(true);
-            process = builder.start();
-            process.waitFor();
-
-            if (process.exitValue() != 0) {
-                isLcgCommandsAvailable = false;
-                logger.warn("LCG Commands unavailable.");
-            } else {
-                logger.info("LCG Commands available.");
-            }
-
+            isAvailable = process.exitValue() == 0;
         } catch (InterruptedException ex) {
-            logger.warn("LCG Commands unavailable.");
-            isLcgCommandsAvailable = false;
+            logger.warn(ex);
         } catch (IOException ex) {
-            logger.warn("LCG Commands unavailable.");
-            isLcgCommandsAvailable = false;
+            logger.warn(ex);
         }
-    }
-
-    private void configureVlet() {
-
-        // Create vlet properties file
-        File vletDir = new File(System.getenv("HOME") + "/.vletrc");
-        if (!vletDir.exists()) {
-            vletDir.mkdir();
-        }
-        File vletProp = new File(System.getenv("HOME") + "/.vletrc/vletrc.prop");
-        if (!vletProp.exists()) {
-            try {
-                vletProp.createNewFile();
-            } catch (IOException ex) {
-                logger.error("Unable to create vlet properties file: " + ex.getMessage());
-                logger.info("Stopping GRIDA Server.");
-                System.exit(1);
-            }
-        }
-
-        // Configuring vlet
-        GlobalConfig.setSystemProperty("bdii.hostname", bdiiHost);
-        GlobalConfig.setSystemProperty("bdii.port", bdiiPort);
-        if (!preferredSEsList.isEmpty()) {
-            setPreferredSEs();
-            GlobalConfig.setSystemProperty("lfc.replicaCreationMode", "PreferredRandom");
-            GlobalConfig.setSystemProperty("lfc.replicaSelectionMode", "AllRandom");
-            GlobalConfig.setSystemProperty("lfc.replicaNrOfTries", "5");
-        }
-        vrsContext = new VRSContext();
-        vfsClient = new VFSClient(vrsContext);
+        return isAvailable;
     }
 
     public String getLfcHost() {
@@ -234,14 +235,6 @@ public class Configuration {
 
     public int getPort() {
         return port;
-    }
-
-    public VFSClient getVfsClient() {
-        return vfsClient;
-    }
-
-    public VRSContext getVrsContext() {
-        return vrsContext;
     }
 
     public List<String> getPreferredSEs() {
@@ -257,11 +250,10 @@ public class Configuration {
             }
             sb.append(se);
         }
-        GlobalConfig.setSystemProperty("lfc.listPreferredSEs", sb.toString());
     }
 
     public void setPreferredSEs(String list) {
-        GlobalConfig.setSystemProperty("lfc.listPreferredSEs", list);
+        // This was only used for vlet.  Should it be removed ????
     }
 
     public int getMaxRetryCount() {
@@ -286,10 +278,6 @@ public class Configuration {
 
     public String getCacheFilesPath() {
         return new File(cacheFilesPath).getAbsolutePath();
-    }
-
-    public boolean isLcgCommandsAvailable() {
-        return isLcgCommandsAvailable;
     }
 
     public String getVo() {
@@ -318,5 +306,9 @@ public class Configuration {
 
     public int getMaxHistory() {
         return maxHistory;
+    }
+
+    public Operations getOperations() {
+        return operations;
     }
 }
