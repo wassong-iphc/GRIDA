@@ -52,7 +52,7 @@ public class Constants {
     public static final String LAB_CACHE_PATH = "cache.files.path";
     public static final String LAB_FAILOVER_SERVERS = "failover.servers";
     public static final String LAB_LFC_HOST = "lfc.host";
-    public static final String LAB_LFC_PREFERRED_SES = "lfc.preferredSEsList";
+    public static final String LAB_PREFERRED_SES = "preferredSEsList";
     public static final String LAB_POOL_MAX_DELETE = "pool.max.delete";
     public static final String LAB_POOL_MAX_DOWNLOAD = "pool.max.download";
     public static final String LAB_POOL_MAX_HISTORY = "pool.max.history";
