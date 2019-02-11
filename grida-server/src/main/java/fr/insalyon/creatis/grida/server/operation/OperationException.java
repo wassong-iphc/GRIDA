@@ -47,4 +47,8 @@ public class OperationException extends Exception {
     public OperationException(Throwable thrwbl) {
         super(thrwbl);
     }
+
+    public OperationException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

@@ -32,21 +32,16 @@ package fr.insalyon.creatis.grida.server.operation;
 
 import fr.insalyon.creatis.grida.common.bean.GridData;
 import fr.insalyon.creatis.grida.server.Configuration;
-import fr.insalyon.creatis.grida.server.dao.DAOException;
-import fr.insalyon.creatis.grida.server.dao.DAOFactory;
 import fr.insalyon.creatis.grida.server.execution.PoolProcessManager;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
+
+import java.io.*;
+import java.nio.file.*;
+import java.text.*;
+import java.util.*;
+
+import static java.nio.file.Files.createTempDirectory;
 
 public class DiracOperations implements Operations {
 
@@ -389,12 +384,70 @@ public class DiracOperations implements Operations {
     @Override
     public void rename(String proxy, String oldPath, String newPath)
         throws OperationException {
+        // a simple rename is not available in dirac. We need to it manually
+        // TODO : This need to be improved : do it in a higher level to benefit from caching
+        // If only dirac is supported, it would also be better to remove the rename operation
+        // from this low level class
 
-        String error =
-            "[dirac] Rename operation not implemented. '" +
-            oldPath + "' to '" + newPath + "'.";
-        logger.error(error);
-        throw new OperationException(error);
+        logger.info("[dirac] Renaming '" + oldPath + "' to '" + newPath + "'");
+        String localDirPath = getTempLocalDir();
+        String newFileDirPath = Paths.get(newPath).getParent().toString();
+        String oldFileName = Paths.get(oldPath).getFileName().toString();
+        String newFileName = Paths.get(newPath).getFileName().toString();
+
+        // check things
+        if (exists(proxy, newPath) || ! exists(proxy, newFileDirPath)) {
+            String error =
+                    "[dirac] Error renaming to '" + newPath
+                            + "'. File already exists or the folder doesn't";
+            logger.error(error);
+            throw new OperationException(error);
+        }
+
+        // first download it
+        downloadFile(null, proxy, localDirPath, oldFileName, oldPath);
+        logger.info("[dirac] Renaming, downloading '" + oldPath + "' done");
+        // rename it
+        renameLocalFile(localDirPath, oldFileName, newFileName);
+        // upload it to the new path
+        uploadFile(null, proxy, localDirPath + "/" + newFileName, newFileDirPath);
+        logger.info("[dirac] Renaming, upload '" + newPath + "' done");
+        // delete oldFile
+        deleteFile(proxy, oldPath);
+        // clean local folder (the upload deletes the local file, there's only the dir to delete)
+        deleteLocalFolder(localDirPath);
+        logger.info("[dirac] Renaming, cleaning done");
+    }
+
+    private String getTempLocalDir() throws OperationException {
+        try {
+            return Files.createTempDirectory("grida-rename-temp").toString();
+        } catch (IOException e) {
+            String error =
+                    "[dirac] Error getting tmp dir from java";
+            logger.error(error);
+            throw new OperationException(error, e);
+        }
+    }
+
+    private void renameLocalFile(String dir, String oldName, String newName) throws OperationException {
+        if (! new File(dir, oldName).renameTo(new File(dir, newName)) ) {
+            String error =
+                    "[dirac] Error renaming local file";
+            logger.error(error);
+            throw new OperationException(error);
+        }
+    }
+
+    private void deleteLocalFolder(String folderPath) {
+        try {
+            Files.delete(Paths.get(folderPath));
+        } catch (IOException e) {
+            // not to log it but it's not fatal
+            String error =
+                    "[dirac] Error deleting local file and folder : '" + folderPath + "'. Ignoring it";
+            logger.warn(error, e);
+        }
     }
 
     @Override
