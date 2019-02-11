@@ -72,16 +72,34 @@ public class DiracOperations implements Operations {
         throws OperationException {
 
         logger.info("[dirac] Getting modification date for: " + path);
-        String[] output = executeCommand(
+        List<String> output = executeCommand(
             proxy,
             "Unable to get modification date for '" + path,
             "dls", "-l", path);
+        if (output.isEmpty()) {
+            String error =
+                    "[dirac] Cannot get modification date for '" +
+                            path+ "' because it does not exist";
+            logger.error(error);
+            throw new OperationException(error);
+        }
         try {
             SimpleDateFormat formatter =
                 new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            Date modifTime = formatter.parse(
-                output[INDEX_DATE] + " " + output[INDEX_TIME]);
-            return modifTime.getTime();
+            // cout.split("\\s+")
+            Date lastModifTime = null;
+            // if it's a file, there's only one line so it's OK
+            // if it's a folder, we get the list of files from this folder with each file's modification date
+            // so we take the most recent one
+            for (String outputLine : output) {
+                String[] outputLineSplitted = outputLine.split("\\s+");
+                Date lineModifTime = formatter.parse(
+                        outputLineSplitted[INDEX_DATE] + " " + outputLineSplitted[INDEX_TIME]);
+                if (lastModifTime == null || lineModifTime.after(lastModifTime)) {
+                    lastModifTime = lineModifTime;
+                }
+            }
+            return lastModifTime.getTime();
         } catch (ParseException ex) {
             logger.error(ex);
             throw new OperationException(ex);
@@ -382,11 +400,11 @@ public class DiracOperations implements Operations {
     @Override
     public boolean exists(String proxy, String path) throws OperationException {
         logger.info("[dirac] Checking existence of '" + path + "'");
-        String[] output = executeCommand(
+        List<String> output = executeCommand(
             proxy,
             "Unable to verify existence for '" + path,
             "dls", "-l", path);
-        return output.length > 0;
+        return ! output.isEmpty();
     }
 
     @Override
@@ -427,13 +445,13 @@ public class DiracOperations implements Operations {
         return OperationsUtil.getProcess(proxy, "bash", "-c", sb.toString());
     }
 
-    private String[] executeCommand(
+    private List<String> executeCommand(
         String proxy, String errorMessage, String... arguments)
         throws OperationException {
 
         try {
             Process process = processFor(proxy, arguments);
-            String cout = "";
+            List<String> cout = new ArrayList<>();
             try (BufferedReader r = new BufferedReader(
                      new InputStreamReader(process.getInputStream()))) {
                 String s = null;
@@ -445,7 +463,7 @@ public class DiracOperations implements Operations {
                         // output, so this does not hurt.
                         isFirst = false;
                     } else {
-                        cout += s + "\n";
+                        cout.add(s);
                     }
                 }
                 process.waitFor();
@@ -455,10 +473,10 @@ public class DiracOperations implements Operations {
             if (process.exitValue() != 0) {
                 logger.error(
                     "[dirac] " + errorMessage + ": " + cout);
-                throw new OperationException(cout);
+                throw new OperationException(String.join("\n", cout));
             }
             process = null;
-            return cout.split("\\s+");
+            return cout;
         } catch (IOException | InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);
