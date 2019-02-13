@@ -71,6 +71,10 @@ public class DiracOperations implements Operations {
             proxy,
             "Unable to get modification date for '" + path,
             "dls", "-l", path);
+        // remove the first line where there's the requested LFN
+        if (output.size() > 0) {
+            output.remove(0);
+        }
         if (output.isEmpty()) {
             String error =
                     "[dirac] Cannot get modification date for '" +
@@ -457,6 +461,10 @@ public class DiracOperations implements Operations {
             proxy,
             "Unable to verify existence for '" + path,
             "dls", "-l", path);
+        // remove the first line where there's the requested LFN
+        if (output.size() > 0) {
+            output.remove(0);
+        }
         return ! output.isEmpty();
     }
 
@@ -508,16 +516,8 @@ public class DiracOperations implements Operations {
             try (BufferedReader r = new BufferedReader(
                      new InputStreamReader(process.getInputStream()))) {
                 String s = null;
-                boolean isFirst = true;
                 while ((s = r.readLine()) != null) {
-                    if (isFirst) {
-                        // Skip first line, which is the name of the concerned
-                        // path for the dls command.  Other commands ignore
-                        // output, so this does not hurt.
-                        isFirst = false;
-                    } else {
-                        cout.add(s);
-                    }
+                    cout.add(s);
                 }
                 process.waitFor();
                 OperationsUtil.close(process);
@@ -525,7 +525,7 @@ public class DiracOperations implements Operations {
 
             if (process.exitValue() != 0) {
                 logger.error(
-                    "[dirac] " + errorMessage + ": " + cout);
+                    "[dirac] " + errorMessage + ": " + String.join("\n", cout));
                 throw new OperationException(String.join("\n", cout));
             }
             process = null;
