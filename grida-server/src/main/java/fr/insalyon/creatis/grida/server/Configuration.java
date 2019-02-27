@@ -150,7 +150,7 @@ public class Configuration {
             vo = config.getString(Constants.LAB_VO, "biomed");
             bdiiHost = config.getString(Constants.LAB_BDII_HOST, "cclcgtopbdii02.in2p3.fr");
             bdiiPort = config.getString(Constants.LAB_BDII_PORT, "2170");
-            preferredSEsList = config.getList(Constants.LAB_LFC_PREFERRED_SES, new ArrayList<String>());
+            preferredSEsList = config.getList(Constants.LAB_PREFERRED_SES, new ArrayList<String>());
             cacheListMaxEntries = config.getInt(Constants.LAB_CACHE_MAX_ENTRIES, 30);
             cacheListMaxHours = config.getInt(Constants.LAB_CACHE_MAX_HOURS, 12);
             cacheFilesMaxSize = config.getDouble(Constants.LAB_CACHE_MAX_SIZE, 100) * 1024 * 1024;
@@ -162,7 +162,7 @@ public class Configuration {
             maxSimultaneousReplications = config.getInt(Constants.LAB_POOL_MAX_REPLICATION, 5);
             maxHistory = config.getInt(Constants.LAB_POOL_MAX_HISTORY, 120);
 
-            commandsType = config.getString(Constants.LAB_COMMANDS_TYPE, "lcg");
+            commandsType = config.getString(Constants.LAB_COMMANDS_TYPE, "dirac");
             diracBashrc = config.getString(Constants.LAB_DIRAC_BASHRC, "needed_if_commands.type_is_dirac");
 
             config.setProperty(Constants.LAB_AGENT_PORT, port);
@@ -172,7 +172,7 @@ public class Configuration {
             config.setProperty(Constants.LAB_VO, vo);
             config.setProperty(Constants.LAB_BDII_HOST, bdiiHost);
             config.setProperty(Constants.LAB_BDII_PORT, bdiiPort);
-            config.setProperty(Constants.LAB_LFC_PREFERRED_SES, preferredSEsList);
+            config.setProperty(Constants.LAB_PREFERRED_SES, preferredSEsList);
             config.setProperty(Constants.LAB_CACHE_MAX_ENTRIES, cacheListMaxEntries);
             config.setProperty(Constants.LAB_CACHE_MAX_HOURS, cacheListMaxHours);
             config.setProperty(Constants.LAB_CACHE_MAX_SIZE, cacheFilesMaxSize / (1024 * 1024));

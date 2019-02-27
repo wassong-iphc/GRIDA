@@ -32,21 +32,16 @@ package fr.insalyon.creatis.grida.server.operation;
 
 import fr.insalyon.creatis.grida.common.bean.GridData;
 import fr.insalyon.creatis.grida.server.Configuration;
-import fr.insalyon.creatis.grida.server.dao.DAOException;
-import fr.insalyon.creatis.grida.server.dao.DAOFactory;
 import fr.insalyon.creatis.grida.server.execution.PoolProcessManager;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
+
+import java.io.*;
+import java.nio.file.*;
+import java.text.*;
+import java.util.*;
+
+import static java.nio.file.Files.createTempDirectory;
 
 public class DiracOperations implements Operations {
 
@@ -72,16 +67,38 @@ public class DiracOperations implements Operations {
         throws OperationException {
 
         logger.info("[dirac] Getting modification date for: " + path);
-        String[] output = executeCommand(
+        List<String> output = executeCommand(
             proxy,
             "Unable to get modification date for '" + path,
             "dls", "-l", path);
+        // remove the first line where there's the requested LFN
+        if (output.size() > 0) {
+            output.remove(0);
+        }
+        if (output.isEmpty()) {
+            String error =
+                    "[dirac] Cannot get modification date for '" +
+                            path+ "' because it does not exist";
+            logger.error(error);
+            throw new OperationException(error);
+        }
         try {
             SimpleDateFormat formatter =
                 new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            Date modifTime = formatter.parse(
-                output[INDEX_DATE] + " " + output[INDEX_TIME]);
-            return modifTime.getTime();
+            // cout.split("\\s+")
+            Date lastModifTime = null;
+            // if it's a file, there's only one line so it's OK
+            // if it's a folder, we get the list of files from this folder with each file's modification date
+            // so we take the most recent one
+            for (String outputLine : output) {
+                String[] outputLineSplitted = outputLine.split("\\s+");
+                Date lineModifTime = formatter.parse(
+                        outputLineSplitted[INDEX_DATE] + " " + outputLineSplitted[INDEX_TIME]);
+                if (lastModifTime == null || lineModifTime.after(lastModifTime)) {
+                    lastModifTime = lineModifTime;
+                }
+            }
+            return lastModifTime.getTime();
         } catch (ParseException ex) {
             logger.error(ex);
             throw new OperationException(ex);
@@ -371,22 +388,84 @@ public class DiracOperations implements Operations {
     @Override
     public void rename(String proxy, String oldPath, String newPath)
         throws OperationException {
+        // a simple rename is not available in dirac. We need to it manually
+        // TODO : This need to be improved : do it in a higher level to benefit from caching
+        // If only dirac is supported, it would also be better to remove the rename operation
+        // from this low level class
 
-        String error =
-            "[dirac] Rename operation not implemented. '" +
-            oldPath + "' to '" + newPath + "'.";
-        logger.error(error);
-        throw new OperationException(error);
+        logger.info("[dirac] Renaming '" + oldPath + "' to '" + newPath + "'");
+        String localDirPath = getTempLocalDir();
+        String newFileDirPath = Paths.get(newPath).getParent().toString();
+        String oldFileName = Paths.get(oldPath).getFileName().toString();
+        String newFileName = Paths.get(newPath).getFileName().toString();
+
+        // check things
+        if (exists(proxy, newPath) || ! exists(proxy, newFileDirPath)) {
+            String error =
+                    "[dirac] Error renaming to '" + newPath
+                            + "'. File already exists or the folder doesn't";
+            logger.error(error);
+            throw new OperationException(error);
+        }
+
+        // first download it
+        downloadFile(null, proxy, localDirPath, oldFileName, oldPath);
+        logger.info("[dirac] Renaming, downloading '" + oldPath + "' done");
+        // rename it
+        renameLocalFile(localDirPath, oldFileName, newFileName);
+        // upload it to the new path
+        uploadFile(null, proxy, localDirPath + "/" + newFileName, newFileDirPath);
+        logger.info("[dirac] Renaming, upload '" + newPath + "' done");
+        // delete oldFile
+        deleteFile(proxy, oldPath);
+        // clean local folder (the upload deletes the local file, there's only the dir to delete)
+        deleteLocalFolder(localDirPath);
+        logger.info("[dirac] Renaming, cleaning done");
+    }
+
+    private String getTempLocalDir() throws OperationException {
+        try {
+            return Files.createTempDirectory("grida-rename-temp").toString();
+        } catch (IOException e) {
+            String error =
+                    "[dirac] Error getting tmp dir from java";
+            logger.error(error);
+            throw new OperationException(error, e);
+        }
+    }
+
+    private void renameLocalFile(String dir, String oldName, String newName) throws OperationException {
+        if (! new File(dir, oldName).renameTo(new File(dir, newName)) ) {
+            String error =
+                    "[dirac] Error renaming local file";
+            logger.error(error);
+            throw new OperationException(error);
+        }
+    }
+
+    private void deleteLocalFolder(String folderPath) {
+        try {
+            Files.delete(Paths.get(folderPath));
+        } catch (IOException e) {
+            // not to log it but it's not fatal
+            String error =
+                    "[dirac] Error deleting local file and folder : '" + folderPath + "'. Ignoring it";
+            logger.warn(error, e);
+        }
     }
 
     @Override
     public boolean exists(String proxy, String path) throws OperationException {
         logger.info("[dirac] Checking existence of '" + path + "'");
-        String[] output = executeCommand(
+        List<String> output = executeCommand(
             proxy,
             "Unable to verify existence for '" + path,
             "dls", "-l", path);
-        return output.length > 0;
+        // remove the first line where there's the requested LFN
+        if (output.size() > 0) {
+            output.remove(0);
+        }
+        return ! output.isEmpty();
     }
 
     @Override
@@ -427,26 +506,18 @@ public class DiracOperations implements Operations {
         return OperationsUtil.getProcess(proxy, "bash", "-c", sb.toString());
     }
 
-    private String[] executeCommand(
+    private List<String> executeCommand(
         String proxy, String errorMessage, String... arguments)
         throws OperationException {
 
         try {
             Process process = processFor(proxy, arguments);
-            String cout = "";
+            List<String> cout = new ArrayList<>();
             try (BufferedReader r = new BufferedReader(
                      new InputStreamReader(process.getInputStream()))) {
                 String s = null;
-                boolean isFirst = true;
                 while ((s = r.readLine()) != null) {
-                    if (isFirst) {
-                        // Skip first line, which is the name of the concerned
-                        // path for the dls command.  Other commands ignore
-                        // output, so this does not hurt.
-                        isFirst = false;
-                    } else {
-                        cout += s + "\n";
-                    }
+                    cout.add(s);
                 }
                 process.waitFor();
                 OperationsUtil.close(process);
@@ -454,11 +525,11 @@ public class DiracOperations implements Operations {
 
             if (process.exitValue() != 0) {
                 logger.error(
-                    "[dirac] " + errorMessage + ": " + cout);
-                throw new OperationException(cout);
+                    "[dirac] " + errorMessage + ": " + String.join("\n", cout));
+                throw new OperationException(String.join("\n", cout));
             }
             process = null;
-            return cout.split("\\s+");
+            return cout;
         } catch (IOException | InterruptedException ex) {
             logger.error(ex);
             throw new OperationException(ex);
