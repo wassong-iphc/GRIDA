@@ -85,11 +85,11 @@ public class DiracOperations implements Operations {
         try {
             SimpleDateFormat formatter =
                 new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            // cout.split("\\s+")
+            formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
             Date lastModifTime = null;
-            // if it's a file, there's only one line so it's OK
-            // if it's a folder, we get the list of files from this folder with each file's modification date
-            // so we take the most recent one
+            // If it's a file, there's only one line so it's OK.  If it's a
+            // folder, we get the list of files from this folder with each
+            // file's modification date so we take the most recent one.
             for (String outputLine : output) {
                 String[] outputLineSplitted = outputLine.split("\\s+");
                 Date lineModifTime = formatter.parse(
