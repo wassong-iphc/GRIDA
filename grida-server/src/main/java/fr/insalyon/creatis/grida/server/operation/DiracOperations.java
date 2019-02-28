@@ -287,15 +287,23 @@ public class DiracOperations implements Operations {
             List<String> ses = Configuration.getInstance().getPreferredSEs();
             logger.info("[dirac] Uploading preferred SE: " + ses);
 
+            // Destination directory may not exist, but it is created by the
+            // dput command.  To avoid the file getting the directory name, we
+            // provide the full destination name.
+            String remoteFileName =
+                remoteDir
+                + (remoteDir.endsWith("/") ? "" : "/")
+                + new File(localFilePath).getName();
+
             if (ses.size() == 0) {
                 // Use the default SE
                 Process process = processFor(
-                    proxy, "dput", localFilePath, remoteDir);
+                    proxy, "dput", localFilePath, remoteFileName);
                 completed = uploadToSe(operationID, process);
             } else {
                 for (String se : ses) {
                     Process process = processFor(
-                        proxy, "dput", "-D", se, localFilePath, remoteDir);
+                        proxy, "dput", "-D", se, localFilePath, remoteFileName);
 
                     logger.info("[dirac] Uploading file to se: " + se);
                     completed = uploadToSe(operationID, process);
