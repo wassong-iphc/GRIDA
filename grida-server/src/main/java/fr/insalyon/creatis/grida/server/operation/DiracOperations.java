@@ -85,11 +85,11 @@ public class DiracOperations implements Operations {
         try {
             SimpleDateFormat formatter =
                 new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            // cout.split("\\s+")
+            formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
             Date lastModifTime = null;
-            // if it's a file, there's only one line so it's OK
-            // if it's a folder, we get the list of files from this folder with each file's modification date
-            // so we take the most recent one
+            // If it's a file, there's only one line so it's OK.  If it's a
+            // folder, we get the list of files from this folder with each
+            // file's modification date so we take the most recent one.
             for (String outputLine : output) {
                 String[] outputLineSplitted = outputLine.split("\\s+");
                 Date lineModifTime = formatter.parse(
@@ -278,7 +278,6 @@ public class DiracOperations implements Operations {
         String remoteDir) throws OperationException {
 
         try {
-            String fileName = new File(localFilePath).getName();
             boolean completed = false;
 
             logger.info("[dirac] Uploading file: " + localFilePath +
@@ -287,15 +286,21 @@ public class DiracOperations implements Operations {
             List<String> ses = Configuration.getInstance().getPreferredSEs();
             logger.info("[dirac] Uploading preferred SE: " + ses);
 
+            // Destination directory may not exist, but it is created by the
+            // dput command.  To avoid the file getting the directory name, we
+            // provide the full destination name.
+            String remoteFileName =
+                remoteDir + "/" + new File(localFilePath).getName();
+
             if (ses.size() == 0) {
                 // Use the default SE
                 Process process = processFor(
-                    proxy, "dput", localFilePath, remoteDir);
+                    proxy, "dput", localFilePath, remoteFileName);
                 completed = uploadToSe(operationID, process);
             } else {
                 for (String se : ses) {
                     Process process = processFor(
-                        proxy, "dput", "-D", se, localFilePath, remoteDir);
+                        proxy, "dput", "-D", se, localFilePath, remoteFileName);
 
                     logger.info("[dirac] Uploading file to se: " + se);
                     completed = uploadToSe(operationID, process);
@@ -311,7 +316,7 @@ public class DiracOperations implements Operations {
             }
 
             FileUtils.deleteQuietly(new File(localFilePath));
-            return remoteDir + "/" + fileName;
+            return remoteFileName;
         } catch (InterruptedException | IOException ex) {
             logger.error(ex);
             throw new OperationException(ex);
