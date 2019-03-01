@@ -278,7 +278,6 @@ public class DiracOperations implements Operations {
         String remoteDir) throws OperationException {
 
         try {
-            String fileName = new File(localFilePath).getName();
             boolean completed = false;
 
             logger.info("[dirac] Uploading file: " + localFilePath +
@@ -291,9 +290,7 @@ public class DiracOperations implements Operations {
             // dput command.  To avoid the file getting the directory name, we
             // provide the full destination name.
             String remoteFileName =
-                remoteDir
-                + (remoteDir.endsWith("/") ? "" : "/")
-                + new File(localFilePath).getName();
+                remoteDir + "/" + new File(localFilePath).getName();
 
             if (ses.size() == 0) {
                 // Use the default SE
@@ -319,7 +316,7 @@ public class DiracOperations implements Operations {
             }
 
             FileUtils.deleteQuietly(new File(localFilePath));
-            return remoteDir + "/" + fileName;
+            return remoteFileName;
         } catch (InterruptedException | IOException ex) {
             logger.error(ex);
             throw new OperationException(ex);
