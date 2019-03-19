@@ -70,7 +70,7 @@ public class DiracOperations implements Operations {
         List<String> output = executeCommand(
             proxy,
             "Unable to get modification date for '" + path,
-            "dirac-dms-lfn metadata " + path +
+            "dirac-dms-lfn-metadata " + path +
                 " | grep ModificationDate | sed -e 's/.*(\\(.*\\)).*/\\1/'");
         if (output.isEmpty()) {
             String error =
@@ -447,7 +447,7 @@ public class DiracOperations implements Operations {
         List<String> output = executeCommand(
             proxy,
             "Unable to verify existence for '" + path,
-            "dirac-dms-lfn metadata " + path + " | grep ModificationDate");
+            "dirac-dms-lfn-metadata " + path + " | grep ModificationDate");
         return ! output.isEmpty();
     }
 
