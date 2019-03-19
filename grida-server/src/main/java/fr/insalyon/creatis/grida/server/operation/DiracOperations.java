@@ -70,11 +70,8 @@ public class DiracOperations implements Operations {
         List<String> output = executeCommand(
             proxy,
             "Unable to get modification date for '" + path,
-            "dls", "-l", path);
-        // remove the first line where there's the requested LFN
-        if (output.size() > 0) {
-            output.remove(0);
-        }
+            "dirac-dms-lfn-metadata " + path +
+                " | grep ModificationDate | sed -e 's/.*(\\(.*\\)).*/\\1/'");
         if (output.isEmpty()) {
             String error =
                     "[dirac] Cannot get modification date for '" +
@@ -83,22 +80,7 @@ public class DiracOperations implements Operations {
             throw new OperationException(error);
         }
         try {
-            SimpleDateFormat formatter =
-                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-            Date lastModifTime = null;
-            // If it's a file, there's only one line so it's OK.  If it's a
-            // folder, we get the list of files from this folder with each
-            // file's modification date so we take the most recent one.
-            for (String outputLine : output) {
-                String[] outputLineSplitted = outputLine.split("\\s+");
-                Date lineModifTime = formatter.parse(
-                        outputLineSplitted[INDEX_DATE] + " " + outputLineSplitted[INDEX_TIME]);
-                if (lastModifTime == null || lineModifTime.after(lastModifTime)) {
-                    lastModifTime = lineModifTime;
-                }
-            }
-            return lastModifTime.getTime();
+            return DiracOperations.parseMetadataDate(output.get(0));
         } catch (ParseException ex) {
             logger.error(ex);
             throw new OperationException(ex);
@@ -465,11 +447,7 @@ public class DiracOperations implements Operations {
         List<String> output = executeCommand(
             proxy,
             "Unable to verify existence for '" + path,
-            "dls", "-l", path);
-        // remove the first line where there's the requested LFN
-        if (output.size() > 0) {
-            output.remove(0);
-        }
+            "dirac-dms-lfn-metadata " + path + " | grep ModificationDate");
         return ! output.isEmpty();
     }
 
@@ -565,5 +543,13 @@ public class DiracOperations implements Operations {
             }
         }
         return completed;
+    }
+
+    static long parseMetadataDate(String s) throws ParseException {
+        SimpleDateFormat formatter =
+            new SimpleDateFormat("yyyy, MM, dd, HH, mm, ss");
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+        Date date = formatter.parse(s);
+        return date.getTime();
     }
 }
