@@ -549,7 +549,13 @@ public class DiracOperations implements Operations {
         SimpleDateFormat formatter =
             new SimpleDateFormat("yyyy, MM, dd, HH, mm, ss");
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-        Date date = formatter.parse(s);
+
+        // Tests of dirac-dms-lfn-metadata show that the seconds can miss if
+        // they are at 0, but the minutes are always there, even if at 0.
+        long count = s.chars().filter(ch -> ch == ',').count();
+        String completeDate = count >= 5 ? s : s + ", 0";
+
+        Date date = formatter.parse(completeDate);
         return date.getTime();
     }
 }

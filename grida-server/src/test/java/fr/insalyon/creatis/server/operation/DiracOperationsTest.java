@@ -48,4 +48,11 @@ public class DiracOperationsTest {
         res = DiracOperations.parseMetadataDate("2019, 1, 1, 1, 1, 1");
         assertEquals(1546304461000L, res);
     }
+
+    @Test
+    @DisplayName("Parsing of date returned by dirac-dms-lfn-metadata, with missing seconds")
+    public void dateWithMissingSecondsIsParsed()  throws ParseException {
+        long res = DiracOperations.parseMetadataDate("2019, 12, 28, 14, 21");
+        assertEquals(1577542860000L, res);
+    }
 }
