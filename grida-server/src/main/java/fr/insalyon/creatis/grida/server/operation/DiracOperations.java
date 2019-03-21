@@ -444,10 +444,14 @@ public class DiracOperations implements Operations {
     @Override
     public boolean exists(String proxy, String path) throws OperationException {
         logger.info("[dirac] Checking existence of '" + path + "'");
+        // The "|| :" is added so that the return code of the command is always
+        // 0, even if grep does not find anything.  This avoids an exception
+        // thrown by the executeCommand function, and allows to check if the
+        // output is empty or not.
         List<String> output = executeCommand(
             proxy,
             "Unable to verify existence for '" + path,
-            "dirac-dms-lfn-metadata " + path + " | grep ModificationDate");
+            "dirac-dms-lfn-metadata " + path + " | grep ModificationDate || :");
         return ! output.isEmpty();
     }
 
