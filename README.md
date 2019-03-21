@@ -53,7 +53,7 @@ It allows to interact with the server.
 
 The client also has a command line, that can be used with the command:
 ```shell
-java -jar grida-client-2.0.0.jar
+java -jar grida-client-2.0.1.jar
 ```
 
 When this command is run without arguments, it prints the usage to
