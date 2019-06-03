@@ -6,36 +6,80 @@ GRIDA means Grid Data Management Agent.
 
 Grida is mainly a server, than can receive requests to interact with a
 file catalog.  It is for example able to upload, download, or list
-files from a LCG or Dirac file catalog.
+files.  It supports Dirac file catalog, and LFC as a legacy.
+
+Grida is essentially used by the Vip platform.  The following
+describes how to install and configure Grida for a Vip server.  The
+version used are `v6r21p1` for Dirac, and `2.0.1` for Grida.
+
+### Dirac installation
+
+Grida for Vip uses the Dirac File Catalog (DFC), and the Dirac
+commands to execute the transfers.  So it needs a recent version of
+Dirac to be installed.  Here is how Dirac is installed for Vip.  You
+may have to change the path to the proxy file.
+
+```shell
+su - vip
+cd /home/vip
+mkdir dirac
+cd dirac
+wget -O dirac-install --no-check-certificate -np https://raw.github.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py
+chmod +x dirac-install
+./dirac-install -V gridfr -r v6r21p1 -e COMDIRAC
+source bashrc
+export X509_USER_PROXY=<PATH TO PROXY FILE USED BY VIP>
+dirac-configure defaults-gridfr.cfg
+```
+
+Here is the official installation guide for the Dirac client: https://github.com/DIRACGrid/DIRAC/wiki/ClientInstallation
+
+### Starting the server as a service
+
+The Grida server should run as a service on the same machine as the
+Vip server.  This is because they share some disk space.  Grida
+directly reads or write the file to transfer from disk.  The Grida
+client sends the path of the file to handle to the Grida server.
+
+Here is the content of the file `/etc/systemd/system/grida.service`:
+```
+[Unit]
+Description=Grida server
+After=network.target
+[Service]
+User=vip
+Type=simple
+WorkingDirectory=/home/vip/grida
+Environment=JAVA_HOME=/etc/alternatives/jre_1.8.0
+ExecStart=/etc/alternatives/jre_1.8.0/bin/java -jar /home/vip/grida/grida-server-2.0.1.jar
+[Install]
+WantedBy=multi-user.target
+```
 
 ### Server configuration
 
-The default configuration for the server is:
+The configuration for the server, adapted to Vip, is:
 ```
 agent.port = 9006
 agent.retrycount = 5
-agent.min.available.diskspace = 0.1
+agent.min.available.diskspace = 0.02
 lfc.host = lfc-biomed.in2p3.fr
+preferredSEsList = SBG-disk,NIKHEF-disk,CPPM-disk
 vo = biomed
 bdii.host = cclcgtopbdii02.in2p3.fr
 bdii.port = 2170
 cache.list.max.entries = 30
 cache.list.max.hours = 12
 cache.files.max.size = 100.0
-cache.files.path = .cache
+cache.files.path = /home/vip/grida/cache
 pool.max.download = 10
 pool.max.upload = 10
 pool.max.delete = 5
 pool.max.replication = 5
-pool.max.history = 120
-commands.type = lcg
-dirac.bashrc = needed_if_commands.type_is_dirac
+pool.max.history = 15
+commands.type = dirac
+dirac.bashrc = /home/vip/dirac/bashrc
 ```
-
-To the above list, must be added 2 entries which are empty by default
-(thus not shown):
-- the preferred SE list, named `lfc.preferredSEsList`.
-- the failover servers list, named `failover.servers`.
 
 The accepted values for `commands.type` are `lcg` and `dirac`.  If the
 value is `dirac`, then the entry `dirac.bashrc` must be set to the
@@ -53,7 +97,7 @@ It allows to interact with the server.
 
 The client also has a command line, that can be used with the command:
 ```shell
-java -jar grida-client-1.4.1.jar
+java -jar grida-client-2.0.1.jar
 ```
 
 When this command is run without arguments, it prints the usage to
